@@ -33,10 +33,11 @@ namespace ORB_SLAM3
 class MapDrawer
 {
 public:
-    MapDrawer(Atlas* pAtlas, const string &strSettingPath);
+    MapDrawer(int sysId, Atlas* pAtlas, const string &strSettingPath);
 
     Atlas* mpAtlas;
-
+    int sysId;
+    
     void DrawMapPoints();
     void DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const bool bDrawInertialGraph);
     void DrawCurrentCamera(pangolin::OpenGlMatrix &Twc);

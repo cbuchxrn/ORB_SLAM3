@@ -140,7 +140,9 @@ protected:
     cv::Matx33f SkewSymmetricMatrix_(const cv::Matx31f &v);
 
     System *mpSystem;
-
+    //slam system id 
+    int sysId;
+    
     bool mbMonocular;
     bool mbInertial;
 

@@ -70,6 +70,7 @@ private:
     MapDrawer* mpMapDrawer;
     Tracking* mpTracker;
 
+    int sysId;
     // 1/fps in ms
     double mT;
     float mImageWidth, mImageHeight;

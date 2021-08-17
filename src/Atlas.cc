@@ -26,14 +26,42 @@
 namespace ORB_SLAM3
 {
 
+void Atlas::registerSys(ORB_SLAM3::System* currentSystem)
+{
+    // retruns id for later references
+    int index = 0;
+    for(ORB_SLAM3::System* pSystem : this->mvpRegisteredSystems)
+    {   
+        if (currentSystem == pSystem)
+        {
+            currentSystem->setSysId(index);
+        }
+        index ++;
+    }
+
+
+    // If the element is not
+    // present in the vector
+    this->mvpRegisteredSystems.push_back(currentSystem);
+    this->mpCurrentMap.push_back(static_cast<Map*>(NULL));
+    CreateNewMap(index);
+    currentSystem->setSysId(index);
+    
+}
+
+Atlas* Atlas::getInstance()
+{
+    static Atlas* instance = new Atlas(0);
+    return instance;
+}
+
 Atlas::Atlas(){
-    mpCurrentMap = static_cast<Map*>(NULL);
+    
 }
 
 Atlas::Atlas(int initKFid): mnLastInitKFidMap(initKFid), mHasViewer(false)
 {
-    mpCurrentMap = static_cast<Map*>(NULL);
-    CreateNewMap();
+
 }
 
 Atlas::~Atlas()
@@ -57,36 +85,49 @@ Atlas::~Atlas()
 
 void Atlas::CreateNewMap()
 {
+    // create a new map for each connected slam system 
+    int nSys = mvpRegisteredSystems.size();
+    for(int iSys = 0;iSys < nSys;iSys++) 
+    {
+        Atlas::CreateNewMap(iSys);
+    }
+
+}
+
+void Atlas::CreateNewMap(int SysID)
+{
+    // create a new map for slam system with given id 
+
     unique_lock<mutex> lock(mMutexAtlas);
     cout << "Creation of new map with id: " << Map::nNextId << endl;
-    if(mpCurrentMap){
+    if(mpCurrentMap[SysID]){
         cout << "Exits current map " << endl;
-        if(!mspMaps.empty() && mnLastInitKFidMap < mpCurrentMap->GetMaxKFid())
-            mnLastInitKFidMap = mpCurrentMap->GetMaxKFid()+1; //The init KF is the next of current maximum
+        if(!mspMaps.empty() && mnLastInitKFidMap < mpCurrentMap[SysID]->GetMaxKFid())
+            mnLastInitKFidMap = mpCurrentMap[SysID]->GetMaxKFid()+1; //The init KF is the next of current maximum
 
-        mpCurrentMap->SetStoredMap();
-        cout << "Saved map with ID: " << mpCurrentMap->GetId() << endl;
+        mpCurrentMap[SysID]->SetStoredMap();
+        cout << "Saved map with ID: " << mpCurrentMap[SysID]->GetId() << endl;
 
         //if(mHasViewer)
         //    mpViewer->AddMapToCreateThumbnail(mpCurrentMap);
     }
     cout << "Creation of new map with last KF id: " << mnLastInitKFidMap << endl;
 
-    mpCurrentMap = new Map(mnLastInitKFidMap);
-    mpCurrentMap->SetCurrentMap();
-    mspMaps.insert(mpCurrentMap);
+    mpCurrentMap[SysID] = new Map(mnLastInitKFidMap);
+    mpCurrentMap[SysID]->SetCurrentMap();
+    mspMaps.insert(mpCurrentMap[SysID]);
 }
 
-void Atlas::ChangeMap(Map* pMap)
+void Atlas::ChangeMap(int SysID, Map* pMap)
 {
     unique_lock<mutex> lock(mMutexAtlas);
     cout << "Chage to map with id: " << pMap->GetId() << endl;
-    if(mpCurrentMap){
-        mpCurrentMap->SetStoredMap();
+    if(mpCurrentMap[SysID]){
+        mpCurrentMap[SysID]->SetStoredMap();
     }
 
-    mpCurrentMap = pMap;
-    mpCurrentMap->SetCurrentMap();
+    mpCurrentMap[SysID] = pMap;
+    mpCurrentMap[SysID]->SetCurrentMap();
 }
 
 unsigned long int Atlas::GetLastInitKFid()
@@ -118,52 +159,52 @@ void Atlas::AddCamera(GeometricCamera* pCam)
     mvpCameras.push_back(pCam);
 }
 
-void Atlas::SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs)
+void Atlas::SetReferenceMapPoints(int SysID,const std::vector<MapPoint*> &vpMPs)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    mpCurrentMap->SetReferenceMapPoints(vpMPs);
+    mpCurrentMap[SysID]->SetReferenceMapPoints(vpMPs);
 }
 
-void Atlas::InformNewBigChange()
+void Atlas::InformNewBigChange(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    mpCurrentMap->InformNewBigChange();
+    mpCurrentMap[SysID]->InformNewBigChange();
 }
 
-int Atlas::GetLastBigChangeIdx()
+int Atlas::GetLastBigChangeIdx(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    return mpCurrentMap->GetLastBigChangeIdx();
+    return mpCurrentMap[SysID]->GetLastBigChangeIdx();
 }
 
-long unsigned int Atlas::MapPointsInMap()
+long unsigned int Atlas::MapPointsInMap(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    return mpCurrentMap->MapPointsInMap();
+    return mpCurrentMap[SysID]->MapPointsInMap();
 }
 
-long unsigned Atlas::KeyFramesInMap()
+long unsigned Atlas::KeyFramesInMap(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    return mpCurrentMap->KeyFramesInMap();
+    return mpCurrentMap[SysID]->KeyFramesInMap();
 }
 
-std::vector<KeyFrame*> Atlas::GetAllKeyFrames()
+std::vector<KeyFrame*> Atlas::GetAllKeyFrames(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    return mpCurrentMap->GetAllKeyFrames();
+    return mpCurrentMap[SysID]->GetAllKeyFrames();
 }
 
-std::vector<MapPoint*> Atlas::GetAllMapPoints()
+std::vector<MapPoint*> Atlas::GetAllMapPoints(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    return mpCurrentMap->GetAllMapPoints();
+    return mpCurrentMap[SysID]->GetAllMapPoints();
 }
 
-std::vector<MapPoint*> Atlas::GetReferenceMapPoints()
+std::vector<MapPoint*> Atlas::GetReferenceMapPoints(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    return mpCurrentMap->GetReferenceMapPoints();
+    return mpCurrentMap[SysID]->GetReferenceMapPoints();
 }
 
 vector<Map*> Atlas::GetAllMaps()
@@ -187,13 +228,13 @@ int Atlas::CountMaps()
     return mspMaps.size();
 }
 
-void Atlas::clearMap()
+void Atlas::clearMap(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    mpCurrentMap->clear();
+    mpCurrentMap[SysID]->clear();
 }
 
-void Atlas::clearAtlas()
+void Atlas::clearAtlas(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
     /*for(std::set<Map*>::iterator it=mspMaps.begin(), send=mspMaps.end(); it!=send; it++)
@@ -202,19 +243,19 @@ void Atlas::clearAtlas()
         delete *it;
     }*/
     mspMaps.clear();
-    mpCurrentMap = static_cast<Map*>(NULL);
+    mpCurrentMap[SysID] = static_cast<Map*>(NULL);
     mnLastInitKFidMap = 0;
 }
 
-Map* Atlas::GetCurrentMap()
+Map* Atlas::GetCurrentMap(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    if(!mpCurrentMap)
+    if(!mpCurrentMap[SysID])
         CreateNewMap();
-    while(mpCurrentMap->IsBad())
+    while(mpCurrentMap[SysID]->IsBad())
         usleep(3000);
 
-    return mpCurrentMap;
+    return mpCurrentMap[SysID];
 }
 
 void Atlas::SetMapBad(Map* pMap)
@@ -235,28 +276,28 @@ void Atlas::RemoveBadMaps()
     mspBadMaps.clear();
 }
 
-bool Atlas::isInertial()
+bool Atlas::isInertial(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    return mpCurrentMap->IsInertial();
+    return mpCurrentMap[SysID]->IsInertial();
 }
 
-void Atlas::SetInertialSensor()
+void Atlas::SetInertialSensor(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    mpCurrentMap->SetInertialSensor();
+    mpCurrentMap[SysID]->SetInertialSensor();
 }
 
-void Atlas::SetImuInitialized()
+void Atlas::SetImuInitialized(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    mpCurrentMap->SetImuInitialized();
+    mpCurrentMap[SysID]->SetImuInitialized();
 }
 
-bool Atlas::isImuInitialized()
+bool Atlas::isImuInitialized(int SysID)
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    return mpCurrentMap->isImuInitialized();
+    return mpCurrentMap[SysID]->isImuInitialized();
 }
 
 void Atlas::SetKeyFrameDababase(KeyFrameDatabase* pKFDB)

@@ -41,7 +41,7 @@ Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
                const bool bUseViewer, const int initFr, const string &strSequence, const string &strLoadingFile):
     mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false), mbResetActiveMap(false),
-    mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false)
+    mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false) 
 {
     // Output welcome message
     cout << endl <<
@@ -66,6 +66,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     //Check settings file
     cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
+    
     if(!fsSettings.isOpened())
     {
        cerr << "Failed to open settings file at: " << strSettingsFile << endl;
@@ -92,19 +93,25 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
 
     //Create the Atlas
-    mpAtlas = new Atlas(0);
-
+    cout << "Get Atlas" << endl ;
+    mpAtlas = Atlas::getInstance();
+    mpAtlas->registerSys(this);
+    cout << "Atlas loaded!" << endl << endl;
+    
     if (mSensor==IMU_STEREO || mSensor==IMU_MONOCULAR)
-        mpAtlas->SetInertialSensor();
+        mpAtlas->SetInertialSensor(this->sysId);
 
     //Create Drawers. These are used by the Viewer
-    mpFrameDrawer = new FrameDrawer(mpAtlas);
-    mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile);
-
+    cout << "Get FrameDrawer " << endl ;
+    mpFrameDrawer = new FrameDrawer(this->sysId, mpAtlas);
+    cout << "FrameDrawer loaded" << endl ;
+    cout << "Get MapDrawer " << endl ;
+    mpMapDrawer = new MapDrawer(this->sysId, mpAtlas, strSettingsFile);
+    cout << "MapDrawer loaded" << endl ;
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
     cout << "Seq. Name: " << strSequence << endl;
-    mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
+    mpTracker = new Tracking(sysId,this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                              mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, strSequence);
 
     //Initialize the Local Mapping thread and launch
@@ -120,7 +127,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         mpLocalMapper->mbFarPoints = false;
 
     //Initialize the Loop Closing thread and launch
-    mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR); // mSensor!=MONOCULAR);
+    mpLoopCloser = new LoopClosing(sysId,mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR); // mSensor!=MONOCULAR);
     mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
     //Initialize the Viewer thread and launch
@@ -147,6 +154,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     Verbose::SetTh(Verbose::VERBOSITY_QUIET);
 
 }
+
 
 cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
@@ -271,6 +279,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
 cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
+
     if(mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR)
     {
         cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular nor Monocular-Inertial." << endl;
@@ -282,6 +291,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const
         unique_lock<mutex> lock(mMutexMode);
         if(mbActivateLocalizationMode)
         {
+            cout << "activate Loc Mod" << endl;
             mpLocalMapper->RequestStop();
 
             // Wait until Local Mapping has effectively stopped
@@ -295,6 +305,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const
         }
         if(mbDeactivateLocalizationMode)
         {
+            cout << "deactivate Loc Mod" << endl;
             mpTracker->InformOnlyTracking(false);
             mpLocalMapper->Release();
             mbDeactivateLocalizationMode = false;
@@ -332,7 +343,14 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const
     return Tcw;
 }
 
-
+int System::getSysId()
+{
+    return this->sysId;
+}
+void System::setSysId(int value)
+{
+    this->sysId = value;
+}
 
 void System::ActivateLocalizationMode()
 {
@@ -349,7 +367,7 @@ void System::DeactivateLocalizationMode()
 bool System::MapChanged()
 {
     static int n=0;
-    int curn = mpAtlas->GetLastBigChangeIdx();
+    int curn = mpAtlas->GetLastBigChangeIdx(this->sysId);
     if(n<curn)
     {
         n=curn;
@@ -416,7 +434,7 @@ void System::SaveTrajectoryTUM(const string &filename)
         return;
     }
 
-    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
+    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames(this->sysId);
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
     // Transform all keyframes so that the first keyframe is at the origin.
@@ -471,7 +489,7 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
 {
     cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
 
-    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
+    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames(this->sysId);
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
     // Transform all keyframes so that the first keyframe is at the origin.
@@ -658,7 +676,7 @@ void System::SaveTrajectoryKITTI(const string &filename)
         return;
     }
 
-    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
+    vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames(this->sysId);
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
     // Transform all keyframes so that the first keyframe is at the origin.
@@ -723,7 +741,7 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
 double System::GetTimeFromIMUInit()
 {
     double aux = mpLocalMapper->GetCurrKFTime()-mpLocalMapper->mFirstTs;
-    if ((aux>0.) && mpAtlas->isImuInitialized())
+    if ((aux>0.) && mpAtlas->isImuInitialized(this->sysId))
         return mpLocalMapper->GetCurrKFTime()-mpLocalMapper->mFirstTs;
     else
         return 0.f;
@@ -731,7 +749,7 @@ double System::GetTimeFromIMUInit()
 
 bool System::isLost()
 {
-    if (!mpAtlas->isImuInitialized())
+    if (!mpAtlas->isImuInitialized(this->sysId))
         return false;
     else
     {
@@ -750,7 +768,7 @@ bool System::isFinished()
 
 void System::ChangeDataset()
 {
-    if(mpAtlas->GetCurrentMap()->KeyFramesInMap() < 12)
+    if(mpAtlas->GetCurrentMap(this->sysId)->KeyFramesInMap() < 12)
     {
         mpTracker->ResetActiveMap();
     }

@@ -57,7 +57,7 @@ class Tracking
 {  
 
 public:
-    Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Atlas* pAtlas,
+    Tracking(int sysId,System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Atlas* pAtlas,
              KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor, const string &_nameSeq=std::string());
 
     ~Tracking();
@@ -119,6 +119,8 @@ public:
     // Input sensor
     int mSensor;
 
+    // current System ID
+    int sysId;
     // Current Frame
     Frame mCurrentFrame;
     Frame mLastFrame;

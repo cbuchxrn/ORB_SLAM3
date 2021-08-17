@@ -40,7 +40,7 @@ class Viewer;
 class FrameDrawer
 {
 public:
-    FrameDrawer(Atlas* pAtlas);
+    FrameDrawer(int sysId, Atlas* pAtlas);
 
     // Update info from the last processed frame.
     void Update(Tracking *pTracker);
@@ -50,6 +50,7 @@ public:
     cv::Mat DrawRightFrame();
 
     bool both;
+    int sysId;
 
 protected:
 

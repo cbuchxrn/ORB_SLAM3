@@ -1339,7 +1339,6 @@ bool TemplatedVocabulary<TDescriptor,F>::loadFromTextFile(const std::string &fil
 {
     ifstream f;
     f.open(filename.c_str());
-	
     if(f.eof())
 	return false;
 
@@ -1355,7 +1354,6 @@ bool TemplatedVocabulary<TDescriptor,F>::loadFromTextFile(const std::string &fil
     int n1, n2;
     ss >> n1;
     ss >> n2;
-
     if(m_k<0 || m_k>20 || m_L<1 || m_L>10 || n1<0 || n1>5 || n2<0 || n2>3)
     {
         std::cerr << "Vocabulary loading failure: This is not a correct text file!" << endl;
@@ -1393,7 +1391,6 @@ bool TemplatedVocabulary<TDescriptor,F>::loadFromTextFile(const std::string &fil
 
         int nIsLeaf;
         ssnode >> nIsLeaf;
-
         stringstream ssd;
         for(int iD=0;iD<F::L;iD++)
         {
@@ -1402,7 +1399,6 @@ bool TemplatedVocabulary<TDescriptor,F>::loadFromTextFile(const std::string &fil
             ssd << sElement << " ";
 	}
         F::fromString(m_nodes[nid].descriptor, ssd.str());
-
         ssnode >> m_nodes[nid].weight;
 
         if(nIsLeaf>0)

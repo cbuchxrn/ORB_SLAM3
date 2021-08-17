@@ -27,11 +27,12 @@ namespace ORB_SLAM3
 {
 
 
-MapDrawer::MapDrawer(Atlas* pAtlas, const string &strSettingPath):mpAtlas(pAtlas)
+MapDrawer::MapDrawer(int sysId, Atlas* pAtlas, const string &strSettingPath):mpAtlas(pAtlas)
 {
     cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
 
     bool is_correct = ParseViewerParamFile(fSettings);
+    this->sysId = sysId;
 
     if(!is_correct)
     {
@@ -122,8 +123,8 @@ bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
 
 void MapDrawer::DrawMapPoints()
 {
-    const vector<MapPoint*> &vpMPs = mpAtlas->GetAllMapPoints();
-    const vector<MapPoint*> &vpRefMPs = mpAtlas->GetReferenceMapPoints();
+    const vector<MapPoint*> &vpMPs = mpAtlas->GetAllMapPoints(this->sysId);
+    const vector<MapPoint*> &vpRefMPs = mpAtlas->GetReferenceMapPoints(this->sysId);
 
     set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
 
@@ -165,7 +166,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
     const float h = w*0.75;
     const float z = w*0.6;
 
-    const vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
+    const vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames(this->sysId);
 
     if(bDrawKF)
     {
@@ -267,7 +268,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
         glEnd();
     }
 
-    if(bDrawInertialGraph && mpAtlas->isImuInitialized())
+    if(bDrawInertialGraph && mpAtlas->isImuInitialized(this->sysId))
     {
         glLineWidth(mGraphLineWidth);
         glColor4f(1.0f,0.0f,0.0f,0.6f);
@@ -296,7 +297,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
     {
         for(Map* pMap : vpMaps)
         {
-            if(pMap == mpAtlas->GetCurrentMap())
+            if(pMap == mpAtlas->GetCurrentMap(this->sysId))
                 continue;
 
             vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
