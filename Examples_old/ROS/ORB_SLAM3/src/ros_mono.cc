@@ -23,6 +23,8 @@
 #include<chrono>
 
 #include<ros/ros.h>
+#include <std_msgs/Float32MultiArray.h>
+#include <std_msgs/MultiArrayDimension.h>
 #include <cv_bridge/cv_bridge.h>
 
 #include<opencv2/core/core.hpp>
@@ -34,32 +36,32 @@ using namespace std;
 class ImageGrabber
 {
 public:
-    ImageGrabber(ORB_SLAM3::System* pSLAM):mpSLAM(pSLAM){}
+    ImageGrabber(ORB_SLAM3::System* pSLAM,ros::Publisher* pPublisher):mpSLAM(pSLAM),mpPublisher(pPublisher){}
 
     void GrabImage(const sensor_msgs::ImageConstPtr& msg);
-
+    void PublishPose(cv::Mat* originalMat);
     ORB_SLAM3::System* mpSLAM;
+    ros::Publisher* mpPublisher;
 };
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "Mono");
     ros::start();
-
-    if(argc != 3)
+    cout << endl <<"argc = " << argc;
+    if(argc != 5)
     {
-        cerr << endl << "Usage: rosrun ORB_SLAM3 Mono path_to_vocabulary path_to_settings" << endl;        
+        cerr << endl << "Usage: rosrun ORB_SLAM3 Mono path_to_vocabulary path_to_settings resource_topic_name" << endl;        
         ros::shutdown();
         return 1;
     }    
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR,true);
-
-    ImageGrabber igb(&SLAM);
-
     ros::NodeHandle nodeHandler;
-    ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage,&igb);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR,false);
+    ros::Publisher pub = nodeHandler.advertise<std_msgs::Float32MultiArray>(argv[4], 1);
+    ImageGrabber igb(&SLAM,&pub);
+    ros::Subscriber sub = nodeHandler.subscribe(argv[3], 1, &ImageGrabber::GrabImage,&igb);
 
     ros::spin();
 
@@ -87,8 +89,36 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
+    cv::Mat TCam;
+    TCam = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+    this->PublishPose(&TCam);
+    //cout << TCam.data << endl;
+}
 
-    mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+void ImageGrabber::PublishPose(cv::Mat* originalMat)
+{
+    if (originalMat->dims == 0 )
+        return;
+        
+    std_msgs::Float32MultiArray sendMat;
+    sendMat.layout = std_msgs::MultiArrayLayout();
+
+    std::vector<std_msgs::MultiArrayDimension> mydim(2);;
+    sendMat.layout.dim =  mydim;
+    
+    sendMat.layout.dim[0].label     = "size1";
+    sendMat.layout.dim[0].size      = 4;
+    sendMat.layout.dim[0].stride    = 16;
+    
+    sendMat.layout.dim[1].label     = "size2";
+    sendMat.layout.dim[1].size      = 4;
+    sendMat.layout.dim[1].stride    = 4;
+    
+
+    sendMat.layout.data_offset      = 0; 
+    sendMat.data.assign(originalMat->begin<float>(), originalMat->end<float>());
+    this->mpPublisher->publish(sendMat);
+    
 }
 
 
