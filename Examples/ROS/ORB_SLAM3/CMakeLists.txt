@@ -30,7 +30,7 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../cmake_modules)
 
-find_package(OpenCV 3.0 QUIET)
+find_package(OpenCV 4.0 QUIET)
 if(NOT OpenCV_FOUND)
    find_package(OpenCV 2.4.3 QUIET)
    if(NOT OpenCV_FOUND)
@@ -65,6 +65,15 @@ src/ros_mono.cc
 )
 
 target_link_libraries(Mono
+${LIBS}
+)
+
+# Node for simulatniouse multiple monocular camera system
+rosbuild_add_executable(MultiMono
+src/ros_multi_mono.cc
+)
+
+target_link_libraries(MultiMono
 ${LIBS}
 )
 
