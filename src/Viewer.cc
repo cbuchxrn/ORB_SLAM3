@@ -29,6 +29,8 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
     both(false), mpSystem(pSystem), mpFrameDrawer(pFrameDrawer),mpMapDrawer(pMapDrawer), mpTracker(pTracking),
     mbFinishRequested(false), mbFinished(true), mbStopped(true), mbStopRequested(false)
 {
+    
+    this->sysId = pSystem->getSysId();
     if(settings){
         newParameterLoader(settings);
     }
@@ -268,7 +270,7 @@ void Viewer::Run()
             s_cam.Follow(Twc);
         }
 
-        if(menuTopView && mpMapDrawer->mpAtlas->isImuInitialized())
+        if(menuTopView && mpMapDrawer->mpAtlas->isImuInitialized(this->sysId))
         {
             menuTopView = false;
             bCameraView = false;

@@ -32,12 +32,17 @@
 namespace ORB_SLAM3
 {
 
+<<<<<<< HEAD
 LoopClosing::LoopClosing(Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale, const bool bActiveLC):
+=======
+LoopClosing::LoopClosing(int sysId, Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale):
+>>>>>>> Allow to have more than one active map in the Atlas
     mbResetRequested(false), mbResetActiveMapRequested(false), mbFinishRequested(false), mbFinished(true), mpAtlas(pAtlas),
     mpKeyFrameDB(pDB), mpORBVocabulary(pVoc), mpMatchedKF(NULL), mLastLoopKFid(0), mbRunningGBA(false), mbFinishedGBA(true),
     mbStopGBA(false), mpThreadGBA(NULL), mbFixScale(bFixScale), mnFullBAIdx(0), mnLoopNumCoincidences(0), mnMergeNumCoincidences(0),
     mbLoopDetected(false), mbMergeDetected(false), mnLoopNumNotFound(0), mnMergeNumNotFound(0), mbActiveLC(bActiveLC)
 {
+    this->sysId = sysId;
     mnCovisibilityConsistencyTh = 3;
     mpLastCurrentKF = static_cast<KeyFrame*>(NULL);
 
@@ -1189,7 +1194,7 @@ void LoopClosing::CorrectLoop()
     vdLoopOptEss_ms.push_back(timeOptEss);
 #endif
 
-    mpAtlas->InformNewBigChange();
+    mpAtlas->InformNewBigChange(this->sysId);
 
     // Add loop edge
     mpLoopMatchedKF->AddLoopEdge(mpCurrentKF);
@@ -1547,7 +1552,7 @@ void LoopClosing::MergeLocal()
             pCurrentMap->EraseMapPoint(pMPi);
         }
 
-        mpAtlas->ChangeMap(pMergeMap);
+        mpAtlas->ChangeMap(this->sysId,pMergeMap);
         mpAtlas->SetMapBad(pCurrentMap);
         pMergeMap->IncreaseChangeIndex();
         //TODO for debug
@@ -1833,7 +1838,7 @@ void LoopClosing::MergeLocal2()
         float s_on = mSold_new.scale();
         Sophus::SE3f T_on(mSold_new.rotation().cast<float>(), mSold_new.translation().cast<float>());
 
-        unique_lock<mutex> lock(mpAtlas->GetCurrentMap()->mMutexMapUpdate);
+        unique_lock<mutex> lock(mpAtlas->GetCurrentMap(this->sysId)->mMutexMapUpdate);
 
         //cout << "KFs before empty: " << mpAtlas->GetCurrentMap()->KeyFramesInMap() << endl;
         mpLocalMapper->EmptyQueue();
@@ -1846,7 +1851,11 @@ void LoopClosing::MergeLocal2()
         bool bScaleVel=false;
         if(s_on!=1)
             bScaleVel=true;
+<<<<<<< HEAD
         mpAtlas->GetCurrentMap()->ApplyScaledRotation(T_on,s_on,bScaleVel);
+=======
+        mpAtlas->GetCurrentMap(this->sysId)->ApplyScaledRotation(R_on,s_on,bScaleVel,t_on);
+>>>>>>> Allow to have more than one active map in the Atlas
         mpTracker->UpdateFrameIMU(s_on,mpCurrentKF->GetImuBias(),mpTracker->GetLastKeyFrame());
 
         std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
@@ -1862,7 +1871,7 @@ void LoopClosing::MergeLocal2()
         ba << 0., 0., 0.;
         Optimizer::InertialOptimization(pCurrentMap,bg,ba);
         IMU::Bias b (ba[0],ba[1],ba[2],bg[0],bg[1],bg[2]);
-        unique_lock<mutex> lock(mpAtlas->GetCurrentMap()->mMutexMapUpdate);
+        unique_lock<mutex> lock(mpAtlas->GetCurrentMap(this->sysId)->mMutexMapUpdate);
         mpTracker->UpdateFrameIMU(1.0f,b,mpTracker->GetLastKeyFrame());
 
         // Set map initialized

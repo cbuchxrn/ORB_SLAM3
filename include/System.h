@@ -104,6 +104,8 @@ public:
     // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
     System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
 
+    int getSysId();
+    void setSysId(int value);
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
     // Returns the camera pose (empty if tracking fails).
@@ -120,7 +122,14 @@ public:
     // Returns the camera pose (empty if tracking fails).
     Sophus::SE3f TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point>& vImuMeas = vector<IMU::Point>(), string filename="");
 
+    // Proccess give multiple monocular frames
+    // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
+    // utilises trackMonocular 
+    // Returns the camera pose (empty if tracking fails).
+    cv::Mat TrackMultiMonocular(const cv::Mat &im, const double &timestamp, string filename="");
 
+    // get a refference to the atlas map management 
+    ORB_SLAM3::Atlas * getAtlasref();
     // This stops local mapping thread (map building) and performs only camera tracking.
     void ActivateLocalizationMode();
     // This resumes local mapping thread and performs SLAM again.
@@ -262,6 +271,10 @@ private:
     string mStrVocabularyFilePath;
 
     Settings* settings_;
+    
+    //current system id
+    int sysId;
+
 };
 
 }// namespace ORB_SLAM

@@ -41,7 +41,7 @@ class FrameDrawer
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    FrameDrawer(Atlas* pAtlas);
+    FrameDrawer(int sysId, Atlas* pAtlas);
 
     // Update info from the last processed frame.
     void Update(Tracking *pTracker);
@@ -51,6 +51,7 @@ public:
     cv::Mat DrawRightFrame(float imageScale=1.f);
 
     bool both;
+    int sysId;
 
 protected:
 

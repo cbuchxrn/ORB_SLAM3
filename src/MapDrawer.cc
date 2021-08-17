@@ -26,8 +26,9 @@ namespace ORB_SLAM3
 {
 
 
-MapDrawer::MapDrawer(Atlas* pAtlas, const string &strSettingPath, Settings* settings):mpAtlas(pAtlas)
+MapDrawer::MapDrawer(int sysId,Atlas* pAtlas, const string &strSettingPath, Settings* settings):mpAtlas(pAtlas)
 {
+    this->sysId = sysId;
     if(settings){
         newParameterLoader(settings);
     }
@@ -134,12 +135,12 @@ bool MapDrawer::ParseViewerParamFile(cv::FileStorage &fSettings)
 
 void MapDrawer::DrawMapPoints()
 {
-    Map* pActiveMap = mpAtlas->GetCurrentMap();
+    Map* pActiveMap = mpAtlas->GetCurrentMap(this->sysId);
     if(!pActiveMap)
         return;
 
-    const vector<MapPoint*> &vpMPs = pActiveMap->GetAllMapPoints();
-    const vector<MapPoint*> &vpRefMPs = pActiveMap->GetReferenceMapPoints();
+    const vector<MapPoint*> &vpMPs = pActiveMap->GetAllMapPoints(this->sysId);
+    const vector<MapPoint*> &vpRefMPs = pActiveMap->GetReferenceMapPoints(this->sysId);
 
     set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
 
@@ -181,7 +182,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
     const float h = w*0.75;
     const float z = w*0.6;
 
-    Map* pActiveMap = mpAtlas->GetCurrentMap();
+    Map* pActiveMap = mpAtlas->GetCurrentMap(this->sysId);
     // DEBUG LBA
     std::set<long unsigned int> sOptKFs = pActiveMap->msOptKFs;
     std::set<long unsigned int> sFixedKFs = pActiveMap->msFixedKFs;
@@ -189,7 +190,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
     if(!pActiveMap)
         return;
 
-    const vector<KeyFrame*> vpKFs = pActiveMap->GetAllKeyFrames();
+    const vector<KeyFrame*> vpKFs = pActiveMap->GetAllKeyFrames(this->sysId);
 
     if(bDrawKF)
     {
@@ -310,7 +311,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
         glEnd();
     }
 
-    if(bDrawInertialGraph && pActiveMap->isImuInitialized())
+    if(bDrawInertialGraph && pActiveMap->isImuInitialized(this->sysId))
     {
         glLineWidth(mGraphLineWidth);
         glColor4f(1.0f,0.0f,0.0f,0.6f);

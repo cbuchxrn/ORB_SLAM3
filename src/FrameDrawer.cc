@@ -27,8 +27,9 @@
 namespace ORB_SLAM3
 {
 
-FrameDrawer::FrameDrawer(Atlas* pAtlas):both(false),mpAtlas(pAtlas)
+FrameDrawer::FrameDrawer(int sysId, Atlas* pAtlas):both(false),mpAtlas(pAtlas)
 {
+    this->sysId = sysId;
     mState=Tracking::SYSTEM_NOT_READY;
     mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
     mImRight = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
@@ -342,8 +343,8 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
         else
             s << "LOCALIZATION | ";
         int nMaps = mpAtlas->CountMaps();
-        int nKFs = mpAtlas->KeyFramesInMap();
-        int nMPs = mpAtlas->MapPointsInMap();
+        int nKFs = mpAtlas->KeyFramesInMap(this->sysId);
+        int nMPs = mpAtlas->MapPointsInMap(this->sysId);
         s << "Maps: " << nMaps << ", KFs: " << nKFs << ", MPs: " << nMPs << ", Matches: " << mnTracked;
         if(mnTrackedVO>0)
             s << ", + VO matches: " << mnTrackedVO;
@@ -372,9 +373,12 @@ void FrameDrawer::Update(Tracking *pTracker)
     unique_lock<mutex> lock(mMutex);
     pTracker->mImGray.copyTo(mIm);
     mvCurrentKeys=pTracker->mCurrentFrame.mvKeys;
+<<<<<<< HEAD
     mThDepth = pTracker->mCurrentFrame.mThDepth;
     mvCurrentDepth = pTracker->mCurrentFrame.mvDepth;
 
+=======
+>>>>>>> Allow to have more than one active map in the Atlas
     if(both){
         mvCurrentKeysRight = pTracker->mCurrentFrame.mvKeysRight;
         pTracker->mImRight.copyTo(mImRight);
@@ -383,7 +387,6 @@ void FrameDrawer::Update(Tracking *pTracker)
     else{
         N = mvCurrentKeys.size();
     }
-
     mvbVO = vector<bool>(N,false);
     mvbMap = vector<bool>(N,false);
     mbOnlyTracking = pTracker->mbOnlyTracking;

@@ -37,12 +37,13 @@ class MapDrawer
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    MapDrawer(Atlas* pAtlas, const string &strSettingPath, Settings* settings);
+    MapDrawer(int sysId, Atlas* pAtlas, const string &strSettingPath, Settings* settings);
 
     void newParameterLoader(Settings* settings);
 
     Atlas* mpAtlas;
-
+    int sysId;
+    
     void DrawMapPoints();
     void DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const bool bDrawInertialGraph, const bool bDrawOptLba);
     void DrawCurrentCamera(pangolin::OpenGlMatrix &Twc);

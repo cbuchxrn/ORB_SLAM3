@@ -74,10 +74,13 @@ public:
 
     Atlas();
     Atlas(int initKFid); // When its initialization the first map is created
+//########################################
+public:
     ~Atlas();
-
+    void registerSys(ORB_SLAM3::System* currentSystem);
     void CreateNewMap();
-    void ChangeMap(Map* pMap);
+    void CreateNewMap(int SysID);
+    void ChangeMap(int SysID,Map* pMap);
 
     unsigned long int GetLastInitKFid();
 
@@ -93,35 +96,35 @@ public:
     std::vector<GeometricCamera*> GetAllCameras();
 
     /* All methods without Map pointer work on current map */
-    void SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs);
-    void InformNewBigChange();
-    int GetLastBigChangeIdx();
+    void SetReferenceMapPoints(int SysID,const std::vector<MapPoint*> &vpMPs);
+    void InformNewBigChange(int SysID);
+    int GetLastBigChangeIdx(int SysID);
 
-    long unsigned int MapPointsInMap();
-    long unsigned KeyFramesInMap();
+    long unsigned int MapPointsInMap(int SysID);
+    long unsigned KeyFramesInMap(int SysID);
 
     // Method for get data in current map
-    std::vector<KeyFrame*> GetAllKeyFrames();
-    std::vector<MapPoint*> GetAllMapPoints();
-    std::vector<MapPoint*> GetReferenceMapPoints();
+    std::vector<KeyFrame*> GetAllKeyFrames(int SysID);
+    std::vector<MapPoint*> GetAllMapPoints(int SysID);
+    std::vector<MapPoint*> GetReferenceMapPoints(int SysID);
 
     vector<Map*> GetAllMaps();
 
     int CountMaps();
 
-    void clearMap();
+    void clearMap(int SysID);
 
-    void clearAtlas();
+    void clearAtlas(int SysID);
 
-    Map* GetCurrentMap();
+    Map* GetCurrentMap(int SysID);
 
     void SetMapBad(Map* pMap);
     void RemoveBadMaps();
 
-    bool isInertial();
-    void SetInertialSensor();
-    void SetImuInitialized();
-    bool isImuInitialized();
+    bool isInertial(int SysID);
+    void SetInertialSensor(int SysID);
+    void SetImuInitialized(int SysID);
+    bool isImuInitialized(int SysID);
 
     // Function for garantee the correction of serialization of this object
     void PreSave();
@@ -148,6 +151,8 @@ protected:
 
     Map* mpCurrentMap;
 
+    std::vector<ORB_SLAM3::System*> mvpRegisteredSystems;
+    
     std::vector<GeometricCamera*> mvpCameras;
 
     unsigned long int mnLastInitKFidMap;

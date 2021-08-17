@@ -140,7 +140,9 @@ protected:
     void KeyFrameCulling();
 
     System *mpSystem;
-
+    //slam system id 
+    int sysId;
+    
     bool mbMonocular;
     bool mbInertial;
 
