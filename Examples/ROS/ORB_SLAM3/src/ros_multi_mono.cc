@@ -225,7 +225,7 @@ int main(int argc, char **argv)
         slamsSys[iCam]->Shutdown();
 
         // Save camera trajectory
-        slamsSys[iCam]->SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+        slamsSys[iCam]->SaveKeyFrameTrajectoryTUM(std::toString(iCam)+"_KeyFrameTrajectory.txt");
 
         ros::shutdown();
     }
