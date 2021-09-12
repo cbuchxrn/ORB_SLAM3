@@ -30,6 +30,11 @@
 
 #include<opencv2/core/core.hpp>
 
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Vector3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include"../../../include/System.h"
 
 using namespace std;
@@ -37,11 +42,12 @@ using namespace std;
 class ImageGrabber
 {
 public:
-    ImageGrabber(ORB_SLAM3::System* pSLAM):mpSLAM(pSLAM){}
-
+    ImageGrabber(ORB_SLAM3::System* pSLAM,ros::Publisher* pPublisher):mpSLAM(pSLAM),mpPublisher(pPublisher){}
+    void PublishPose(cv::Mat* originalMat, ORB_SLAM3::System* mpSLAM);
     void GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
 
     ORB_SLAM3::System* mpSLAM;
+    ros::Publisher* mpPublisher;
 };
 
 int main(int argc, char **argv)
@@ -59,15 +65,20 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD,true);
 
-    ImageGrabber igb(&SLAM);
+   
 
     ros::NodeHandle nh;
-
-    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/camera/rgb/image_raw", 100);
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "camera/depth_registered/image_raw", 100);
+    //advertise camera pose topic for each image
+    ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>("pose_cam_0", 1);
+    ImageGrabber igb(&SLAM,&pub);
+    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/kinect2/hd/image_color", 100);
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "/kinect2/hd/image_depth_rect", 100);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), rgb_sub,depth_sub);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));
+
+
+    
 
     ros::spin();
 
@@ -106,7 +117,50 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-    mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+    cv::Mat TCam;
+    TCam = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+
+    this->PublishPose(&TCam,this->mpSLAM);
 }
 
 
+
+void ImageGrabber::PublishPose(cv::Mat* originalMat, ORB_SLAM3::System* mpSLAM)
+{
+    if (originalMat->dims == 0 )
+        return;
+        
+    cv::Rect rotSel(0,0,3,3);
+    cv::Rect transSel(3,0,1,3);
+    cv::Mat_<double> trans = (*originalMat)(transSel);
+    cv::Mat_<double> rot = (*originalMat)(rotSel);
+
+  
+    // fill msg header
+    geometry_msgs::PoseStamped pStamped;
+    pStamped.header.stamp = ros::Time::now(); // timestamp of creation of the msg
+    pStamped.header.frame_id = "pose_cam_"+std::to_string(mpSLAM->getSysId()); // frame id 
+    geometry_msgs::Pose pose_msg; 
+
+    
+    cv::Mat mat = originalMat->clone();
+
+    //extract Transformation
+    tf2::Matrix3x3 tf2_rot( rot(0,0), rot(0,1) ,rot(0,2),
+                            rot(1,0), rot(1,1) ,rot(1,2),
+                            rot(2,0), rot(2,1) ,rot(2,2));
+    
+    tf2::Vector3 tf2_tran(trans(0,0),trans(1,0),trans(2,0));
+    tf2::Transform tf2_transform(tf2_rot, tf2_tran);
+    tf2::Quaternion q;
+    tf2_rot.getRotation(q);
+
+
+    // fill pose appropriately
+    tf2::toMsg(tf2_transform, pose_msg);
+    pStamped.pose = pose_msg;
+
+    this->mpPublisher->publish(pStamped);
+
+    
+}

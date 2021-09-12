@@ -23,7 +23,9 @@
 #include<chrono>
 
 #include<vector>
-#include<string> 
+#include <string>       // std::string
+#include <iostream>     // std::cout
+#include <sstream>      // std::stringstream, std::stringbuf
 
 #include<ros/ros.h>
 #include<ros/message.h>
@@ -77,6 +79,8 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     }
     cv::Mat TCam;
     TCam = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+
+    
     this->PublishPose(&TCam,this->mpSLAM);
     //cout << TCam.data << endl;
 }
@@ -117,9 +121,8 @@ void ImageGrabber::PublishPose(cv::Mat* originalMat, ORB_SLAM3::System* mpSLAM)
         
     cv::Rect rotSel(0,0,3,3);
     cv::Rect transSel(3,0,1,3);
-    
-    cv::Mat trans = (*originalMat)(transSel);
-    cv::Mat rot = (*originalMat)(rotSel);
+    cv::Mat_<double> trans = (*originalMat)(transSel);
+    cv::Mat_<double> rot = (*originalMat)(rotSel);
 
   
     // fill msg header
@@ -128,16 +131,22 @@ void ImageGrabber::PublishPose(cv::Mat* originalMat, ORB_SLAM3::System* mpSLAM)
     pStamped.header.frame_id = "pose_cam_"+std::to_string(mpSLAM->getSysId()); // frame id 
     geometry_msgs::Pose pose_msg; 
 
+    
+    cv::Mat mat = originalMat->clone();
 
+    ROS_INFO_STREAM("Rot:"  <<originalMat->type()    );
+    ROS_INFO_STREAM("Rot:"  <<rot);
+    ROS_INFO_STREAM("Rot00:"<< rot(0,0));
     //extract Transformation
-    tf2::Matrix3x3 tf2_rot(rot.at<double>(0, 0), rot.at<double>(0, 1), rot.at<double>(0, 2),
-                       rot.at<double>(1, 0), rot.at<double>(1, 1), rot.at<double>(1, 2),
-                       rot.at<double>(2, 0), rot.at<double>(2, 1), rot.at<double>(2, 2));
+    tf2::Matrix3x3 tf2_rot( rot(0,0), rot(0,1) ,rot(0,2),
+                            rot(1,0), rot(1,1) ,rot(1,2),
+                            rot(2,0), rot(2,1) ,rot(2,2));
     
-    tf2::Vector3 tf2_tran(trans.at<double>(0,0),trans.at<double>(1,0),trans.at<double>(2,0));
-  
+    tf2::Vector3 tf2_tran(trans(0,0),trans(1,0),trans(2,0));
     tf2::Transform tf2_transform(tf2_rot, tf2_tran);
-    
+    tf2::Quaternion q;
+    tf2_rot.getRotation(q);
+
 
     // fill pose appropriately
     tf2::toMsg(tf2_transform, pose_msg);
@@ -225,7 +234,7 @@ int main(int argc, char **argv)
         slamsSys[iCam]->Shutdown();
 
         // Save camera trajectory
-        slamsSys[iCam]->SaveKeyFrameTrajectoryTUM(std::toString(iCam)+"_KeyFrameTrajectory.txt");
+        slamsSys[iCam]->SaveKeyFrameTrajectoryTUM(to_string(iCam)+"_KeyFrameTrajectory.txt");
 
         ros::shutdown();
     }
