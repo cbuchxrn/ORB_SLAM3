@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "RGBD");
     ros::start();
 
-    if(argc != 3)
+    if(argc != 5)
     {
         cerr << endl << "Usage: rosrun ORB_SLAM3 RGBD path_to_vocabulary path_to_settings" << endl;        
         ros::shutdown();
@@ -71,8 +71,8 @@ int main(int argc, char **argv)
     //advertise camera pose topic for each image
     ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>("pose_cam_0", 1);
     ImageGrabber igb(&SLAM,&pub);
-    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/kinect2/hd/image_color", 100);
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "/kinect2/hd/image_depth_rect", 100);
+    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, argv[3], 10);
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, argv[4], 10);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), rgb_sub,depth_sub);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));
