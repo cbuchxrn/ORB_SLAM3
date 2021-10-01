@@ -41,11 +41,7 @@ Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
                const bool bUseViewer, const int initFr, const string &strSequence):
     mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false), mbResetActiveMap(false),
-<<<<<<< HEAD
     mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
-=======
-    mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false) 
->>>>>>> Allow to have more than one active map in the Atlas
 {
     // Output welcome message
     cout << endl <<
@@ -156,7 +152,6 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
         cout << "Load File" << endl;
 
-<<<<<<< HEAD
         // Load the file with an earlier session
         //clock_t start = clock();
         cout << "Initialization of Atlas from file: " << mStrLoadAtlasFromFile << endl;
@@ -174,7 +169,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
         loadedAtlas = true;
 
-        mpAtlas->CreateNewMap();
+        mpAtlas->registerSys(this);
+        mpAtlas->CreateNewMap(this->sysId);
 
         //clock_t timeElapsed = clock() - start;
         //unsigned msElapsed = timeElapsed / (CLOCKS_PER_SEC / 1000);
@@ -185,40 +181,17 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 
     if (mSensor==IMU_STEREO || mSensor==IMU_MONOCULAR || mSensor==IMU_RGBD)
-        mpAtlas->SetInertialSensor();
-
-    //Create Drawers. These are used by the Viewer
-    mpFrameDrawer = new FrameDrawer(mpAtlas);
-    mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
-
-    //Initialize the Tracking thread
-    //(it will live in the main thread of execution, the one that called this constructor)
-    cout << "Seq. Name: " << strSequence << endl;
-    mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
-                             mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, strSequence);
-=======
-    //Create the Atlas
-    cout << "Get Atlas" << endl ;
-    mpAtlas = Atlas::getInstance();
-    mpAtlas->registerSys(this);
-    cout << "Atlas loaded!" << endl << endl;
-    
-    if (mSensor==IMU_STEREO || mSensor==IMU_MONOCULAR)
         mpAtlas->SetInertialSensor(this->sysId);
 
     //Create Drawers. These are used by the Viewer
-    cout << "Get FrameDrawer " << endl ;
-    mpFrameDrawer = new FrameDrawer(this->sysId, mpAtlas);
-    cout << "FrameDrawer loaded" << endl ;
-    cout << "Get MapDrawer " << endl ;
-    mpMapDrawer = new MapDrawer(this->sysId, mpAtlas, strSettingsFile);
-    cout << "MapDrawer loaded" << endl ;
+    mpFrameDrawer = new FrameDrawer(this->sysId,mpAtlas);
+    mpMapDrawer = new MapDrawer(this->sysId,mpAtlas, strSettingsFile, settings_);
+
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
     cout << "Seq. Name: " << strSequence << endl;
     mpTracker = new Tracking(sysId,this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
-                             mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, strSequence);
->>>>>>> Allow to have more than one active map in the Atlas
+                             mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, strSequence);
 
     //Initialize the Local Mapping thread and launch
     mpLocalMapper = new LocalMapping(this, mpAtlas, mSensor==MONOCULAR || mSensor==IMU_MONOCULAR,
@@ -238,12 +211,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         mpLocalMapper->mbFarPoints = false;
 
     //Initialize the Loop Closing thread and launch
-<<<<<<< HEAD
     // mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR
-    mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR, activeLC); // mSensor!=MONOCULAR);
-=======
-    mpLoopCloser = new LoopClosing(sysId,mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR); // mSensor!=MONOCULAR);
->>>>>>> Allow to have more than one active map in the Atlas
+    mpLoopCloser = new LoopClosing(sysId, mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR, activeLC); // mSensor!=MONOCULAR);
     mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
     //Set pointers between threads
@@ -274,12 +243,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 }
 
-<<<<<<< HEAD
 Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
-=======
-
-cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
->>>>>>> Allow to have more than one active map in the Atlas
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
     {
@@ -437,15 +401,12 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
 Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
 
-<<<<<<< HEAD
     {
         unique_lock<mutex> lock(mMutexReset);
         if(mbShutDown)
             return Sophus::SE3f();
     }
 
-=======
->>>>>>> Allow to have more than one active map in the Atlas
     if(mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR)
     {
         cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular nor Monocular-Inertial." << endl;
