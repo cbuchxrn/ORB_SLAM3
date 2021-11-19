@@ -111,5 +111,4 @@ namespace ORB_SLAM3 {
     };
 }
 
-
 #endif //CAMERAMODELS_KANNALABRANDT8_H
