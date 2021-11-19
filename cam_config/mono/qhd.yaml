@@ -6,16 +6,24 @@
 Camera.type: "PinHole"
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera.fx: 1.0551315070752844e+03
-Camera.fy: 1.0552244286514840e+03
-Camera.cx: 4.08084149597990870e+02
-Camera.cy: 2.6307365219992914e+02
+Camera.fx: 540.0
+Camera.fy: 540.0
+Camera.cy: 270.0
+Camera.cx: 480.0
 
-Camera.k1: 1.0e-8
-Camera.k2: 1.0e-8
-Camera.p1: 1.0e-8
-Camera.p2: 1.0e-8
-Camera.k3: 1.0e-8
+
+
+#Camera.k1: -0.04243791678398481
+#Camera.k2:  2.642063716158248
+#Camera.p1: -0.009483768894913336
+#Camera.p2: -0.008664836811518094
+#Camera.k3: -20.13447787820017
+
+Camera.k1: -0.0121
+Camera.k2: 0.468
+Camera.p1: 0.0014E-3
+Camera.p2: -0.0086E-3
+Camera.k3: -1.27
 
 Camera.width: 960
 Camera.height: 540
@@ -26,21 +34,24 @@ Camera.fps: 30.0
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 0
 
+Camera.bf: 50.0
+#Camera.bf: 60.0
+
 # Close/Far threshold. Baseline times.
-ThDepth: 40.0
+ThDepth: 160.0
 
 # Deptmap values factor 
-DepthMapFactor: 5000.0 # 1.0 for ROS_bag
+DepthMapFactor: 1000.0 # 1.0 for ROS_bag
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 1000
+ORBextractor.nFeatures: 1500
 
 # ORB Extractor: Scale factor between levels in the scale pyramid 	
-ORBextractor.scaleFactor: 1.2
+ORBextractor.scaleFactor: 1.41
 
 # ORB Extractor: Number of levels in the scale pyramid	
 ORBextractor.nLevels: 8
