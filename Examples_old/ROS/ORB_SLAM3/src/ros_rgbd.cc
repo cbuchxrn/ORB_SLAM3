@@ -22,6 +22,7 @@
 #include<fstream>
 #include<chrono>
 
+#include <opencv2/opencv.hpp>
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <message_filters/subscriber.h>
@@ -57,11 +58,12 @@ int main(int argc, char **argv)
 
     if(argc != 5)
     {
-        cerr << endl << "Usage: rosrun ORB_SLAM3 RGBD path_to_vocabulary path_to_settings" << endl;        
+        cerr << endl << "Usage: rosrun ORB_SLAM3 RGBD path_to_vocabulary path_to_settings rgb_topic d_topic" << endl;        
         ros::shutdown();
         return 1;
     }    
 
+    
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD,true);
 
@@ -96,6 +98,7 @@ int main(int argc, char **argv)
 void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD)
 {
     // Copy the ros image message to cv::Mat.
+    std::cout << "IG_rgbd" << std::endl;
     cv_bridge::CvImageConstPtr cv_ptrRGB;
     try
     {
@@ -108,6 +111,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     }
 
     cv_bridge::CvImageConstPtr cv_ptrD;
+    std::cout << "IG_depth" << std::endl;
     try
     {
         cv_ptrD = cv_bridge::toCvShare(msgD);
@@ -118,7 +122,16 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         return;
     }
     cv::Mat TCam;
-    TCam = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+    
+    /*cv::Size desSize = cv::Size(512,424);
+    cv::Mat img = cv::Mat(desSize,CV_16UC1);
+    cv::resize(cv_ptrRGB->image.clone(),img,desSize);
+    /**/
+    
+    //TCam = mpSLAM->TrackRGBD(img,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+    TCam = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec()).clone();
+    if (TCam.empty())
+        return;
 
     this->PublishPose(&TCam,this->mpSLAM);
 }
@@ -129,7 +142,7 @@ void ImageGrabber::PublishPose(cv::Mat* originalMat, ORB_SLAM3::System* mpSLAM)
 {
     if (originalMat->dims == 0 )
         return;
-        
+    //std::cout<<"\nTCam : \n" << *originalMat <<std::endl;    
     cv::Rect rotSel(0,0,3,3);
     cv::Rect transSel(3,0,1,3);
     cv::Mat_<double> trans = (*originalMat)(transSel);
