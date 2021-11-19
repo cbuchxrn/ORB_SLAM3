@@ -5689,6 +5689,9 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pMainKF,vector<KeyFrame*> vpAdju
 
         pKFi->mnBALocalForKF = pMainKF->mnId;
 
+        //AlbertYoung0112 commit 18a308668f4dee52efd73c478c846c1d6caa3731 
+        pKFi->mnBALocalForMerge = pMainKF->mnId; 
+
         g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
         vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
         vSE3->setId(pKFi->mnId);
