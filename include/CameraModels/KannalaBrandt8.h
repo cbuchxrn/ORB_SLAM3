@@ -110,7 +110,14 @@ namespace ORB_SLAM3 {
         void Triangulate_(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Matx44f &Tcw1, const cv::Matx44f &Tcw2,cv::Matx31f &x3D);
     };
 }
-
+namespace cv
+{
+template<typename _Tp, int m, int n> static inline
+Matx<_Tp, m, n> operator / (const Matx<_Tp, m, n>& a, float alpha)
+{
+return Matx<_Tp, m, n>(a, 1.f / alpha, Matx_ScaleOp());
+}
+}
 //BOOST_CLASS_EXPORT_KEY(ORBSLAM2::KannalaBrandt8)
 
 #endif //CAMERAMODELS_KANNALABRANDT8_H
