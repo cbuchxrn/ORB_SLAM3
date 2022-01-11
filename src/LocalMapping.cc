@@ -1266,7 +1266,6 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 
     std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
     Optimizer::InertialOptimization(mpAtlas->GetCurrentMap(this->sysId), mRwg, mScale, mbg, mba, mbMonocular, infoInertial, false, false, priorG, priorA);
-
     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
     if (mScale<1e-1)

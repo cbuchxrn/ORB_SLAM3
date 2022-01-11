@@ -2580,6 +2580,8 @@ void Tracking::CreateInitialMapMonocular()
  
     Optimizer::GlobalBundleAdjustemnt(mpAtlas->GetCurrentMap(this->sysId),20);
 
+    pKFcur->PrintPointDistribution();
+    
     float medianDepth = pKFini->ComputeSceneMedianDepth(2);
     
     float invMedianDepth;
