@@ -1541,6 +1541,8 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
         imDepth.convertTo(imDepth,CV_32F,mDepthMapFactor);
 
+    
+    std::cout << "Start_TRACK_GrabImg_insertFrame" << std::endl;
     if (mSensor == System::RGBD)
         mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
     else if(mSensor == System::IMU_RGBD)
@@ -1558,8 +1560,10 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
     vdORBExtract_ms.push_back(mCurrentFrame.mTimeORB_Ext);
 #endif
 
+    std::cout << "Start_TRACK_Track" << std::endl;
     Track();
 
+    std::cout << "Start_TRACK_GetPose" << std::endl;
     return mCurrentFrame.GetPose();
 }
 
@@ -2415,7 +2419,7 @@ void Tracking::StereoInitialization()
 
         Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap(this->sysId)) + " points", Verbose::VERBOSITY_QUIET);
 
-        //cout << "Active map: " << mpAtlas->GetCurrentMap()->GetId() << endl;
+        //cout << "Active map: " << mpAtlas->GetCurrentMap(this->sysId)->GetId() << endl;
 
         mpLocalMapper->InsertKeyFrame(pKFini);
 
@@ -2840,7 +2844,7 @@ void Tracking::UpdateLastFrame()
                 x3D = mLastFrame.UnprojectStereoFishEye(i);
             }
 
-            MapPoint* pNewMP = new MapPoint(x3D,mpAtlas->GetCurrentMap(),&mLastFrame,i);
+            MapPoint* pNewMP = new MapPoint(x3D,mpAtlas->GetCurrentMap(this->sysId),&mLastFrame,i);
             mLastFrame.mvpMapPoints[i]=pNewMP;
 
             mlpTemporalPoints.push_back(pNewMP);
@@ -3042,7 +3046,7 @@ bool Tracking::TrackLocalMap()
 
     if (mSensor == System::IMU_MONOCULAR)
     {
-        if((mnMatchesInliers<15 && mpAtlas->isImuInitialized())||(mnMatchesInliers<50 && !mpAtlas->isImuInitialized()))
+        if((mnMatchesInliers<15 && mpAtlas->isImuInitialized(this->sysId))||(mnMatchesInliers<50 && !mpAtlas->isImuInitialized(this->sysId)))
         {
             return false;
         }
@@ -3221,7 +3225,7 @@ bool Tracking::NeedNewKeyFrame()
 
 void Tracking::CreateNewKeyFrame()
 {
-    if(mpLocalMapper->IsInitializing() && !mpAtlas->isImuInitialized())
+    if(mpLocalMapper->IsInitializing() && !mpAtlas->isImuInitialized(this->sysId))
         return;
 
     if(!mpLocalMapper->SetNotStop(true))

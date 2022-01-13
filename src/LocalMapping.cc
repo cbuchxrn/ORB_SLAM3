@@ -229,7 +229,7 @@ void LocalMapping::Run()
                         }
 
                         // scale refinement
-                        if (((mpAtlas->KeyFramesInMap(this->sysId)))<=200) &&
+                        if (((mpAtlas->KeyFramesInMap(this->sysId))<=200) &&
                                 ((mTinit>25.0f && mTinit<25.5f)||
                                 (mTinit>35.0f && mTinit<35.5f)||
                                 (mTinit>45.0f && mTinit<45.5f)||
@@ -692,7 +692,7 @@ void LocalMapping::CreateNewMapPoints()
                 continue;
 
             // Triangulation is succesfull
-            MapPoint* pMP = new MapPoint(x3D, mpCurrentKeyFrame, mpAtlas->GetCurrentMap(this->sysId)));
+            MapPoint* pMP = new MapPoint(x3D, mpCurrentKeyFrame, mpAtlas->GetCurrentMap(this->sysId));
             if (bPointStereo)
                 countStereo++;
             
@@ -1285,7 +1285,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
         }
 
         // Check if initialization OK
-        if (!mpAtlas->isImuInitialized())
+        if (!mpAtlas->isImuInitialized(this->sysId))
             for (int i = 0; i < N; i++) {
                 KeyFrame *pKF2 = vpKF[i];
                 pKF2->bImu = true;
@@ -1327,7 +1327,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
     }
 
     // Correct keyframes starting at map first keyframe
-    list<KeyFrame*> lpKFtoCheck(mpAtlas->GetCurrentMap()->mvpKeyFrameOrigins.begin(),mpAtlas->GetCurrentMap()->mvpKeyFrameOrigins.end());
+    list<KeyFrame*> lpKFtoCheck(mpAtlas->GetCurrentMap(this->sysId)->mvpKeyFrameOrigins.begin(),mpAtlas->GetCurrentMap(this->sysId)->mvpKeyFrameOrigins.end());
 
     while(!lpKFtoCheck.empty())
     {
@@ -1376,7 +1376,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
     }
 
     // Correct MapPoints
-    const vector<MapPoint*> vpMPs = mpAtlas->GetCurrentMap()->GetAllMapPoints();
+    const vector<MapPoint*> vpMPs = mpAtlas->GetCurrentMap(this->sysId)->GetAllMapPoints();
 
     for(size_t i=0; i<vpMPs.size(); i++)
     {
@@ -1475,7 +1475,7 @@ void LocalMapping::ScaleRefinement()
     if ((fabs(mScale-1.f)>0.002)||!mbMonocular)
     {
         Sophus::SE3f Tgw(mRwg.cast<float>().transpose(),Eigen::Vector3f::Zero());
-        mpAtlas->GetCurrentMap(this->sysId))->ApplyScaledRotation(Tgw,mScale,true);
+        mpAtlas->GetCurrentMap(this->sysId)->ApplyScaledRotation(Tgw,mScale,true);
         mpTracker->UpdateFrameIMU(mScale,mpCurrentKeyFrame->GetImuBias(),mpCurrentKeyFrame);
     }
     std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();

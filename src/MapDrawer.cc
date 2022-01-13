@@ -139,8 +139,8 @@ void MapDrawer::DrawMapPoints()
     if(!pActiveMap)
         return;
 
-    const vector<MapPoint*> &vpMPs = pActiveMap->GetAllMapPoints(this->sysId);
-    const vector<MapPoint*> &vpRefMPs = pActiveMap->GetReferenceMapPoints(this->sysId);
+    const vector<MapPoint*> &vpMPs = pActiveMap->GetAllMapPoints();
+    const vector<MapPoint*> &vpRefMPs = pActiveMap->GetReferenceMapPoints();
 
     set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
 
@@ -190,7 +190,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
     if(!pActiveMap)
         return;
 
-    const vector<KeyFrame*> vpKFs = pActiveMap->GetAllKeyFrames(this->sysId);
+    const vector<KeyFrame*> vpKFs = pActiveMap->GetAllKeyFrames();
 
     if(bDrawKF)
     {
@@ -311,7 +311,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const b
         glEnd();
     }
 
-    if(bDrawInertialGraph && pActiveMap->isImuInitialized(this->sysId))
+    if(bDrawInertialGraph && pActiveMap->isImuInitialized())
     {
         glLineWidth(mGraphLineWidth);
         glColor4f(1.0f,0.0f,0.0f,0.6f);

@@ -373,15 +373,9 @@ void FrameDrawer::Update(Tracking *pTracker)
     unique_lock<mutex> lock(mMutex);
     pTracker->mImGray.copyTo(mIm);
     mvCurrentKeys=pTracker->mCurrentFrame.mvKeys;
-<<<<<<< HEAD
-<<<<<<< HEAD
     mThDepth = pTracker->mCurrentFrame.mThDepth;
     mvCurrentDepth = pTracker->mCurrentFrame.mvDepth;
 
-=======
->>>>>>> Allow to have more than one active map in the Atlas
-=======
->>>>>>> a8e1c6b8ee448ba835dcf042886f89d5b8573892
     if(both){
         mvCurrentKeysRight = pTracker->mCurrentFrame.mvKeysRight;
         pTracker->mImRight.copyTo(mImRight);

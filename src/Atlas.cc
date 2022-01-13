@@ -49,19 +49,15 @@ void Atlas::registerSys(ORB_SLAM3::System* currentSystem)
     
 }
 
-Atlas* Atlas::getInstance()
-{
-    static Atlas* instance = new Atlas(0);
-    return instance;
-}
-
 Atlas::Atlas(){
-    
+    mpCurrentMap.push_back(static_cast<Map*>(NULL));
 }
 
 Atlas::Atlas(int initKFid): mnLastInitKFidMap(initKFid), mHasViewer(false)
 {
 
+    mpCurrentMap.push_back(static_cast<Map*>(NULL));
+    CreateNewMap();
 }
 
 Atlas::~Atlas()
@@ -341,11 +337,11 @@ bool Atlas::isImuInitialized(int SysID)
     return mpCurrentMap[SysID]->isImuInitialized();
 }
 
-void Atlas::PreSave()
+void Atlas::PreSave(int SysID)
 {
-    if(mpCurrentMap){
-        if(!mspMaps.empty() && mnLastInitKFidMap < mpCurrentMap->GetMaxKFid())
-            mnLastInitKFidMap = mpCurrentMap->GetMaxKFid()+1; //The init KF is the next of current maximum
+    if(mpCurrentMap[SysID]){
+        if(!mspMaps.empty() && mnLastInitKFidMap < mpCurrentMap[SysID]->GetMaxKFid())
+            mnLastInitKFidMap = mpCurrentMap[SysID]->GetMaxKFid()+1; //The init KF is the next of current maximum
     }
 
     struct compFunctor

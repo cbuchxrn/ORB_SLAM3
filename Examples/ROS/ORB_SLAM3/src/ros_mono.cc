@@ -17,19 +17,24 @@
 */
 
 
-#include<iostream>
-#include<algorithm>
-#include<fstream>
-#include<chrono>
+#include <iostream>
+#include <algorithm>
+#include <fstream>
+#include <chrono>
 
-#include<ros/ros.h>
+#include <System.h>
+
+#include <ros/ros.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/MultiArrayDimension.h>
 #include <cv_bridge/cv_bridge.h>
 
-#include<opencv2/core/core.hpp>
+#include <Eigen/Core>
 
-#include"../../../include/System.h"
+#include<opencv2/core/core.hpp>
+#include<opencv2/core/eigen.hpp>
+
+#include "../../../include/System.h"
 
 using namespace std;
 
@@ -51,7 +56,7 @@ int main(int argc, char **argv)
     cout << endl <<"argc = " << argc;
     if(argc != 6)
     {
-        cerr << endl << "Usage: rosrun ORB_SLAM3 Mono path_to_vocabulary path_to_settings resource_topic_name filename" << endl;        
+        cerr << endl << "Usage: rosrun ORB_SLAM3 Mono path_to_vocabulary path_to_settings resource_topic_name map_file_name" << endl;        
         ros::shutdown();
         return 1;
     }    
@@ -89,8 +94,10 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-    cv::Mat TCam;
-    TCam = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+    cv::Mat TCam ;
+    Sophus::SE3f Tcw_SE3f = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+    Eigen::Matrix4f Tcw_Matrix = Tcw_SE3f.matrix();
+    cv::eigen2cv(Tcw_Matrix, TCam);
     this->PublishPose(&TCam);
     //cout << TCam.data << endl;
 }

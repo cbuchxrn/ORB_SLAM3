@@ -1167,8 +1167,24 @@ namespace ORB_SLAM3
         return monoIndex;
     }
 
-    void ORBextractor::ComputePyramid(cv::Mat image)
-    {
+    void ORBextractor::ComputePyramid(cv::Mat image2)
+    {   //cv::Mat image = image2.clone();
+        cv::Mat image = imread("/home/buchner/test.png").clone();
+        cv::Mat temp = cv::Mat();
+
+        cout << temp.type() << endl;
+        imshow("l-1",image); 
+        cout << image.size() << endl;
+        cout << image.type() << endl;
+        cout << temp.type() << endl;
+        waitKey(0);
+        imshow("l",image); 
+        waitKey(0);
+        imshow("l",image); 
+        waitKey(0);
+        cv::resize(image, temp, Size(), 0.5, 0.5, INTER_LINEAR);
+        imshow("l",temp); 
+        waitKey(0);
         for (int level = 0; level < nlevels; ++level)
         {
             float scale = mvInvScaleFactor[level];
@@ -1180,8 +1196,18 @@ namespace ORB_SLAM3
             // Compute the resized image
             if( level != 0 )
             {
-                resize(mvImagePyramid[level-1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
+                
+            imshow("l-1",mvImagePyramid[level-1]); 
 
+            imshow("l",mvImagePyramid[level]); 
+            waitKey(0);
+            cout << mvImagePyramid[level].size() << endl;
+            cout << sz << endl;
+
+                //resize(mvImagePyramid[level-1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
+                cout << "Resize" << endl;
+                cv::resize(mvImagePyramid[level-1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
+                cout << "copy" << endl;
                 copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101+BORDER_ISOLATED);
             }
@@ -1190,6 +1216,9 @@ namespace ORB_SLAM3
                 copyMakeBorder(image, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101);
             }
+
+        imshow("l",mvImagePyramid[level]); 
+        waitKey(0);
         }
 
     }

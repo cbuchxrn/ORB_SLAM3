@@ -25,6 +25,7 @@
 #include "Converter.h"
 #include "ORBmatcher.h"
 #include "GeometricCamera.h"
+#include<opencv2/opencv.hpp>
 
 #include <thread>
 #include <include/CameraModels/Pinhole.h>
@@ -214,12 +215,14 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     mvInvScaleFactors = mpORBextractorLeft->GetInverseScaleFactors();
     mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
     mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
-
+    
     // ORB extraction
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_StartExtORB = std::chrono::steady_clock::now();
 #endif
+
     ExtractORB(0,imGray,0,0);
+ 
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
@@ -231,9 +234,11 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 
     if(mvKeys.empty())
         return;
-
+    std::cout << "Start_FRAME_undistort" << std::endl;
     UndistortKeyPoints();
 
+
+    std::cout << "Start_FRAME_Compute stereo" << std::endl;
     ComputeStereoFromRGBD(imDepth);
 
     mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));
@@ -416,7 +421,7 @@ void Frame::AssignFeaturesToGrid()
 }
 
 void Frame::ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1)
-{
+{   
     vector<int> vLapping = {x0,x1};
     if(flag==0)
         monoLeft = (*mpORBextractorLeft)(im,cv::Mat(),mvKeys,mDescriptors,vLapping);

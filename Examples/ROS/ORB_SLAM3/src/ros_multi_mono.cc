@@ -37,6 +37,10 @@
 #include<message_filters/time_synchronizer.h>
 #include<message_filters/sync_policies/approximate_time.h>
 
+#include <Eigen/Core>
+
+#include<opencv2/core/core.hpp>
+#include<opencv2/core/eigen.hpp>
 #include<opencv2/core/core.hpp>
 #include<opencv2/core/affine.hpp>
 
@@ -77,9 +81,13 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
+    
     cv::Mat TCam;
-    TCam = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
-
+    
+    Sophus::SE3f Tcw_SE3f = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+    Eigen::Matrix4f Tcw_Matrix = Tcw_SE3f.matrix();
+    cv::eigen2cv(Tcw_Matrix, TCam);
+    this->PublishPoseMat(&TCam);
     
     this->PublishPose(&TCam,this->mpSLAM);
     //cout << TCam.data << endl;

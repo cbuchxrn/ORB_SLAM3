@@ -74,9 +74,8 @@ public:
 
     Atlas();
     Atlas(int initKFid); // When its initialization the first map is created
-//########################################
-public:
     ~Atlas();
+    
     void registerSys(ORB_SLAM3::System* currentSystem);
     void CreateNewMap();
     void CreateNewMap(int SysID);
@@ -127,7 +126,7 @@ public:
     bool isImuInitialized(int SysID);
 
     // Function for garantee the correction of serialization of this object
-    void PreSave();
+    void PreSave(int SysID);
     void PostLoad();
 
     map<long unsigned int, KeyFrame*> GetAtlasKeyframes();
@@ -149,7 +148,7 @@ protected:
     // Its necessary change the container from set to vector because libboost 1.58 and Ubuntu 16.04 have an error with this cointainer
     std::vector<Map*> mvpBackupMaps;
 
-    Map* mpCurrentMap;
+    std::vector<Map*> mpCurrentMap;
 
     std::vector<ORB_SLAM3::System*> mvpRegisteredSystems;
     

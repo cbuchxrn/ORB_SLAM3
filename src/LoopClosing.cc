@@ -32,15 +32,7 @@
 namespace ORB_SLAM3
 {
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-LoopClosing::LoopClosing(Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale, const bool bActiveLC):
-=======
-LoopClosing::LoopClosing(int sysId, Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale):
->>>>>>> Allow to have more than one active map in the Atlas
-=======
-LoopClosing::LoopClosing(int sysId, Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale):
->>>>>>> a8e1c6b8ee448ba835dcf042886f89d5b8573892
+LoopClosing::LoopClosing(int sysId,Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale, const bool bActiveLC):
     mbResetRequested(false), mbResetActiveMapRequested(false), mbFinishRequested(false), mbFinished(true), mpAtlas(pAtlas),
     mpKeyFrameDB(pDB), mpORBVocabulary(pVoc), mpMatchedKF(NULL), mLastLoopKFid(0), mbRunningGBA(false), mbFinishedGBA(true),
     mbStopGBA(false), mpThreadGBA(NULL), mbFixScale(bFixScale), mnFullBAIdx(0), mnLoopNumCoincidences(0), mnMergeNumCoincidences(0),
@@ -1119,7 +1111,7 @@ void LoopClosing::CorrectLoop()
             pKFi->UpdateConnections();
         }
         // TODO Check this index increasement
-        mpAtlas->GetCurrentMap()->IncreaseChangeIndex();
+        mpAtlas->GetCurrentMap(this->sysId)->IncreaseChangeIndex();
 
 
         // Start Loop Fusion
@@ -1194,13 +1186,10 @@ void LoopClosing::CorrectLoop()
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_EndOpt = std::chrono::steady_clock::now();
 
-<<<<<<< HEAD
     double timeOptEss = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndOpt - time_EndFusion).count();
     vdLoopOptEss_ms.push_back(timeOptEss);
 #endif
 
-=======
->>>>>>> a8e1c6b8ee448ba835dcf042886f89d5b8573892
     mpAtlas->InformNewBigChange(this->sysId);
 
     // Add loop edge
@@ -1847,9 +1836,9 @@ void LoopClosing::MergeLocal2()
 
         unique_lock<mutex> lock(mpAtlas->GetCurrentMap(this->sysId)->mMutexMapUpdate);
 
-        //cout << "KFs before empty: " << mpAtlas->GetCurrentMap()->KeyFramesInMap() << endl;
+        //cout << "KFs before empty: " << mpAtlas->GetCurrentMap(this->sysId)->KeyFramesInMap() << endl;
         mpLocalMapper->EmptyQueue();
-        //cout << "KFs after empty: " << mpAtlas->GetCurrentMap()->KeyFramesInMap() << endl;
+        //cout << "KFs after empty: " << mpAtlas->GetCurrentMap(this->sysId)->KeyFramesInMap() << endl;
 
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
         //cout << "updating active map to merge reference" << endl;
@@ -1858,15 +1847,8 @@ void LoopClosing::MergeLocal2()
         bool bScaleVel=false;
         if(s_on!=1)
             bScaleVel=true;
-<<<<<<< HEAD
-<<<<<<< HEAD
-        mpAtlas->GetCurrentMap()->ApplyScaledRotation(T_on,s_on,bScaleVel);
-=======
-        mpAtlas->GetCurrentMap(this->sysId)->ApplyScaledRotation(R_on,s_on,bScaleVel,t_on);
->>>>>>> Allow to have more than one active map in the Atlas
-=======
-        mpAtlas->GetCurrentMap(this->sysId)->ApplyScaledRotation(R_on,s_on,bScaleVel,t_on);
->>>>>>> a8e1c6b8ee448ba835dcf042886f89d5b8573892
+
+        mpAtlas->GetCurrentMap(this->sysId)->ApplyScaledRotation(T_on,s_on,bScaleVel);
         mpTracker->UpdateFrameIMU(s_on,mpCurrentKF->GetImuBias(),mpTracker->GetLastKeyFrame());
 
         std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
