@@ -234,11 +234,9 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 
     if(mvKeys.empty())
         return;
-    std::cout << "Start_FRAME_undistort" << std::endl;
     UndistortKeyPoints();
 
 
-    std::cout << "Start_FRAME_Compute stereo" << std::endl;
     ComputeStereoFromRGBD(imDepth);
 
     mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));

@@ -48,17 +48,17 @@ void Atlas::registerSys(ORB_SLAM3::System* currentSystem)
     currentSystem->setSysId(index);
     
 }
+Atlas* Atlas::getInstance()
+{
+   static Atlas* instance = new Atlas(0);
+   return instance;
+}
 
 Atlas::Atlas(){
-    mpCurrentMap.push_back(static_cast<Map*>(NULL));
 }
 
 Atlas::Atlas(int initKFid): mnLastInitKFidMap(initKFid), mHasViewer(false)
-{
-
-    mpCurrentMap.push_back(static_cast<Map*>(NULL));
-    CreateNewMap();
-}
+{}
 
 Atlas::~Atlas()
 {

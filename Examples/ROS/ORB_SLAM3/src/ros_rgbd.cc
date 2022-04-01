@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 
     
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD,false,0, argv[5]);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD,true,0, argv[5]);
 
    
 
@@ -79,10 +79,10 @@ int main(int argc, char **argv)
     //advertise camera pose topic for each image
     ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>("pose_cam_0", 1);
     ImageGrabber igb(&SLAM,&pub);
-    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, argv[3], 10);
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, argv[4], 10);
+    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, argv[3], 5);
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, argv[4], 5);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
-    message_filters::Synchronizer<sync_pol> sync(sync_pol(10), rgb_sub,depth_sub);
+    message_filters::Synchronizer<sync_pol> sync(sync_pol(40), rgb_sub,depth_sub);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));
 
 
@@ -102,9 +102,9 @@ int main(int argc, char **argv)
 }
 
 void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD)
-{
+{   
+
     // Copy the ros image message to cv::Mat.
-    std::cout << "IG_rgbd" << std::endl;
     cv_bridge::CvImageConstPtr cv_ptrRGB;
     try
     {
@@ -117,7 +117,6 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     }
 
     cv_bridge::CvImageConstPtr cv_ptrD;
-    std::cout << "IG_depth" << std::endl;
     try
     {
         cv_ptrD = cv_bridge::toCvShare(msgD);
@@ -128,33 +127,32 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         return;
     }
     cv::Mat TCam;
-    cv::Mat smaller;
-    cv::imshow("o",cv_ptrRGB->image);
-    cv::waitKey(0);
+    std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
 
-    cv::resize(cv_ptrRGB->image, smaller, cv::Size(), 0.5, 0.5, cv::INTER_LINEAR);
-    cv::imshow("smaller",smaller);
-    cv::waitKey(0);
-    /*cv::Size desSize = cv::Size(512,424);
-    cv::Mat img = cv::Mat(desSize,CV_16UC1);
-    cv::resize(cv_ptrRGB->image.clone(),img,desSize);
-    /**/
-    
-    //TCam = mpSLAM->TrackRGBD(img,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
-    //TCam = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec()).clone();
-    std::cout << "Start_TRACK" << std::endl;
-    
-    cv::Mat rgbImg =  cv_ptrRGB->image.clone();
-    cv::Mat dImg = cv_ptrD->image.clone();
-    
-    
-    Sophus::SE3f Tcw_SE3f = mpSLAM->TrackRGBD(rgbImg,dImg,cv_ptrRGB->header.stamp.toSec(),vImuMeas,filename);
-    std::cout << "Start_PUBLISHING" << std::endl;
+    cv::Size desSize = cv_ptrRGB->image.size();
+    cv::Mat dImg = cv::Mat(desSize,cv_ptrD->image.type());
+    //cv::Mat rgbImg =  cv_ptrRGB->image.clone();
+    cv::resize(cv_ptrD->image,dImg,desSize);
+    //cv::imshow("Depth",dImg.clone());
+    //cv::imshow("RGB",rgbImg);
+    //cv::waitKey(27);
+    Sophus::SE3f Tcw_SE3f = mpSLAM->TrackRGBD(cv_ptrRGB->image,dImg,cv_ptrRGB->header.stamp.toSec(),vImuMeas,filename);
     Eigen::Matrix4f Tcw_Matrix = Tcw_SE3f.matrix();
     cv::eigen2cv(Tcw_Matrix, TCam); 
     
     if (TCam.empty())
         return;
+    /*
+    std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
+    double t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
+    std::cout<< t_resize << std::endl;*/
+    //cv::imshow("",dImg);    
+    //cv::waitKey(27);
+    //TrackRGBD(rgbImg,dImg,cv_ptrRGB->header.stamp.toSec(),vImuMeas,filename);
+    //TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+
+    
+    
 
     this->PublishPose(&TCam,this->mpSLAM);
     

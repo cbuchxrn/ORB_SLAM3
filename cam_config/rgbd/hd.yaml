@@ -3,43 +3,55 @@
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
+File.version: "1.0"
+
 Camera.type: "PinHole"
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera.fx: 1.0551315070752844e+03 
-Camera.fy: 1.0610844286514840e+03
-Camera.cx: 8.08084149597990870e+02
-Camera.cy: 4.2307365219992914e+02
+#Camera1.fx: 1.0551315070752844e+03 
+#Camera1.fy: 1.0610844286514840e+03
+#Camera1.cx: 8.08084149597990870e+02
+#Camera1.cy: 4.2307365219992914e+02
 
-#Camera.k1: -0.04243791678398481
-#Camera.k2:  2.642063716158248
-#Camera.p1: -0.009483768894913336
-#Camera.p2: -0.008664836811518094
-#Camera.k3: -20.13447787820017
+#Camera1.fx: 1044.4
+#Camera1.fy: 1046.2
+#Camera1.cy: 523.1
+#Camera1.cx: 951.0
 
-Camera.k1: 0.0
-Camera.k2: 0.0
-Camera.p1: 0.0
-Camera.p2: 0.0
-Camera.k3: 0.0
+#Camera1.k1: 0.0390521
+#Camera1.k2: 0.001213
+#Camera1.p1: -0.002314
+#Camera1.p2: 0.00070718
+#Camera1.k3: -0.057450
+
+Camera1.fx: 1060.53738553
+Camera1.fy: 1060.00002233
+Camera1.cx: 953.22601579
+Camera1.cy: 524.18209607
+     
+Camera1.k1:  0.03432152
+Camera1.k2:  -0.03335339
+Camera1.p1:  -0.00043981
+Camera1.p2:  0.00021287
+Camera1.k3:  0.0
+
+
 
 Camera.width: 1920
 Camera.height: 1080
 
 # Camera frames per second 
-Camera.fps: 30.0
+Camera.fps: 30
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 0
 
-Camera.bf: 60.0
-#Camera.bf: 60.0
-
 # Close/Far threshold. Baseline times.
-ThDepth: 80.0
+Stereo.ThDepth: 40.0
+Stereo.b: 0.07732
 
 # Deptmap values factor 
-DepthMapFactor: 1000.0 # 1.0 for ROS_bag
+RGBD.DepthMapFactor: 1000.0 # 1.0 for ROS_bag
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
@@ -49,7 +61,7 @@ DepthMapFactor: 1000.0 # 1.0 for ROS_bag
 ORBextractor.nFeatures: 1000
 
 # ORB Extractor: Scale factor between levels in the scale pyramid 	
-ORBextractor.scaleFactor: 1.4
+ORBextractor.scaleFactor: 1.2
 
 # ORB Extractor: Number of levels in the scale pyramid	
 ORBextractor.nLevels: 8
@@ -59,19 +71,18 @@ ORBextractor.nLevels: 8
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast			
 ORBextractor.iniThFAST: 20
-ORBextractor.minThFAST: 5
+ORBextractor.minThFAST: 7
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters
 #---------------------------------------------------------------------------------------------
 Viewer.KeyFrameSize: 0.05
-Viewer.KeyFrameLineWidth: 1
+Viewer.KeyFrameLineWidth: 1.0
 Viewer.GraphLineWidth: 0.9
-Viewer.PointSize: 2
+Viewer.PointSize: 2.0
 Viewer.CameraSize: 0.08
-Viewer.CameraLineWidth: 3
-Viewer.ViewpointX: 0
+Viewer.CameraLineWidth: 3.0
+Viewer.ViewpointX: 0.0
 Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -1.8
-Viewer.ViewpointF: 500
-
+Viewer.ViewpointF: 500.0

@@ -1537,12 +1537,11 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
         else
             cvtColor(mImGray,mImGray,cv::COLOR_BGRA2GRAY);
     }
-
+    
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
         imDepth.convertTo(imDepth,CV_32F,mDepthMapFactor);
 
     
-    std::cout << "Start_TRACK_GrabImg_insertFrame" << std::endl;
     if (mSensor == System::RGBD)
         mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
     else if(mSensor == System::IMU_RGBD)
@@ -1560,10 +1559,8 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
     vdORBExtract_ms.push_back(mCurrentFrame.mTimeORB_Ext);
 #endif
 
-    std::cout << "Start_TRACK_Track" << std::endl;
     Track();
 
-    std::cout << "Start_TRACK_GetPose" << std::endl;
     return mCurrentFrame.GetPose();
 }
 
@@ -1613,7 +1610,6 @@ Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &times
     vdORBExtract_ms.push_back(mCurrentFrame.mTimeORB_Ext);
 #endif
 
-    lastID = mCurrentFrame.mnId;
     Track();
 
     return mCurrentFrame.GetPose();
@@ -1812,7 +1808,6 @@ void Tracking::Track()
         mpSystem->ResetActiveMap();
         return;
     }
-
     Map* pCurrentMap = mpAtlas->GetCurrentMap(this->sysId);
     if(!pCurrentMap)
     {
@@ -1826,6 +1821,7 @@ void Tracking::Track()
             cerr << "ERROR: Frame with a timestamp older than previous frame detected!" << endl;
             unique_lock<mutex> lock(mMutexImuQueue);
             mlQueueImuData.clear();
+
             CreateMapInAtlas();
             return;
         }

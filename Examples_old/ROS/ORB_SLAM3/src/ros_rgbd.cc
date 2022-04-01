@@ -111,7 +111,6 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     }
 
     cv_bridge::CvImageConstPtr cv_ptrD;
-    std::cout << "IG_depth" << std::endl;
     try
     {
         cv_ptrD = cv_bridge::toCvShare(msgD);

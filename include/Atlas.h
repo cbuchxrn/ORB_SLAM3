@@ -68,14 +68,23 @@ class Atlas
         ar & GeometricCamera::nNextId;
         ar & mnLastInitKFidMap;
     }
-
+private: 
+    Atlas();
+    Atlas(int initKFid); // When its initialization the first map is created
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    Atlas();
-    Atlas(int initKFid); // When its initialization the first map is created
+
     ~Atlas();
-    
+    //Singelton Pattern
+    //########################################
+    public:
+        static Atlas* getInstance();
+        Atlas(Atlas const&)           = delete;
+        void operator=(Atlas const&)  = delete;
+
+    //########################################
+
     void registerSys(ORB_SLAM3::System* currentSystem);
     void CreateNewMap();
     void CreateNewMap(int SysID);

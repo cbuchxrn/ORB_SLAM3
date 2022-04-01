@@ -219,7 +219,6 @@ void Viewer::Run()
     }
 
     float trackedImageScale = mpTracker->GetImageScale();
-
     cout << "Starting the Viewer" << endl;
     while(1)
     {

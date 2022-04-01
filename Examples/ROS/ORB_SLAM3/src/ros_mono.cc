@@ -29,6 +29,11 @@
 #include <std_msgs/MultiArrayDimension.h>
 #include <cv_bridge/cv_bridge.h>
 
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Vector3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <Eigen/Core>
 
 #include<opencv2/core/core.hpp>
@@ -44,11 +49,12 @@ public:
     ImageGrabber(ORB_SLAM3::System* pSLAM,ros::Publisher* pPublisher):mpSLAM(pSLAM),mpPublisher(pPublisher){}
 
     void GrabImage(const sensor_msgs::ImageConstPtr& msg);
-    void PublishPose(cv::Mat* originalMat);
+    void PublishPose(cv::Mat* originalMat, ORB_SLAM3::System* mpSLAM);
     ORB_SLAM3::System* mpSLAM;
     ros::Publisher* mpPublisher;
 };
-
+const vector<ORB_SLAM3::IMU::Point>& vImuMeas = vector<ORB_SLAM3::IMU::Point>();
+string filename="asdsa";
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "Mono");
@@ -64,10 +70,18 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ros::NodeHandle nodeHandler;
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR,true,0, argv[5]);
-    ros::Publisher pub = nodeHandler.advertise<std_msgs::Float32MultiArray>(argv[4], 1);
+    ros::Publisher pub = nodeHandler.advertise<geometry_msgs::PoseStamped>(argv[4], 1);
     ImageGrabber igb(&SLAM,&pub);
     ros::Subscriber sub = nodeHandler.subscribe(argv[3], 1, &ImageGrabber::GrabImage,&igb);
 
+    /*ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>("pose_cam_0", 1);
+    ImageGrabber igb(&SLAM,&pub);
+    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, argv[3], 10);
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, argv[4], 10);
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
+    message_filters::Synchronizer<sync_pol> sync(sync_pol(10), rgb_sub,depth_sub);
+    sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));
+    */
     ros::spin();
 
     // Stop all threads
@@ -83,6 +97,7 @@ int main(int argc, char **argv)
 
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
+   
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptr;
     try
@@ -94,37 +109,55 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
+
     cv::Mat TCam ;
-    Sophus::SE3f Tcw_SE3f = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+    Sophus::SE3f Tcw_SE3f = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec(),vImuMeas,filename);
     Eigen::Matrix4f Tcw_Matrix = Tcw_SE3f.matrix();
     cv::eigen2cv(Tcw_Matrix, TCam);
-    this->PublishPose(&TCam);
+    if (TCam.empty())
+        return;
+
+    this->PublishPose(&TCam,this->mpSLAM);
     //cout << TCam.data << endl;
 }
 
-void ImageGrabber::PublishPose(cv::Mat* originalMat)
+void ImageGrabber::PublishPose(cv::Mat* originalMat, ORB_SLAM3::System* mpSLAM)
 {
     if (originalMat->dims == 0 )
         return;
-        
-    std_msgs::Float32MultiArray sendMat;
-    sendMat.layout = std_msgs::MultiArrayLayout();
+    //std::cout<<"\nTCam : \n" << *originalMat <<std::endl;    
+    cv::Rect rotSel(0,0,3,3);
+    cv::Rect transSel(3,0,1,3);
+    cv::Mat_<double> trans = (*originalMat)(transSel);
+    cv::Mat_<double> rot = (*originalMat)(rotSel);
 
-    std::vector<std_msgs::MultiArrayDimension> mydim(2);;
-    sendMat.layout.dim =  mydim;
-    
-    sendMat.layout.dim[0].label     = "size1";
-    sendMat.layout.dim[0].size      = 4;
-    sendMat.layout.dim[0].stride    = 16;
-    
-    sendMat.layout.dim[1].label     = "size2";
-    sendMat.layout.dim[1].size      = 4;
-    sendMat.layout.dim[1].stride    = 4;
-    
+  
+    // fill msg header
+    geometry_msgs::PoseStamped pStamped;
+    pStamped.header.stamp = ros::Time::now(); // timestamp of creation of the msg
+    pStamped.header.frame_id = "pose_cam_"+std::to_string(mpSLAM->getSysId()); // frame id 
+    geometry_msgs::Pose pose_msg; 
 
-    sendMat.layout.data_offset      = 0; 
-    sendMat.data.assign(originalMat->begin<float>(), originalMat->end<float>());
-    this->mpPublisher->publish(sendMat);
+    
+    cv::Mat mat = originalMat->clone();
+
+    //extract Transformation
+    tf2::Matrix3x3 tf2_rot( rot(0,0), rot(0,1) ,rot(0,2),
+                            rot(1,0), rot(1,1) ,rot(1,2),
+                            rot(2,0), rot(2,1) ,rot(2,2));
+    
+    tf2::Vector3 tf2_tran(trans(0,0),trans(1,0),trans(2,0));
+    tf2::Transform tf2_transform(tf2_rot, tf2_tran);
+    tf2::Quaternion q;
+    tf2_rot.getRotation(q);
+
+
+    // fill pose appropriately
+    tf2::toMsg(tf2_transform, pose_msg);
+    pStamped.pose = pose_msg;
+
+    this->mpPublisher->publish(pStamped);
+
     
 }
 
