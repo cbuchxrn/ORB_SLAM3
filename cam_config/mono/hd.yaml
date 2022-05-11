@@ -6,22 +6,22 @@
 Camera.type: "PinHole"
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera.fx: 1.0551315070752844e+03 
-Camera.fy: 1.0610844286514840e+03
-Camera.cx: 8.08084149597990870e+02
-Camera.cy: 4.2307365219992914e+02
+Camera.fx: 1054.4997243587125
+Camera.fy: 1055.67168504142
+Camera.cx: 932.4839065632632
+Camera.cy: 553.355509134761
 #Camera.cx: 478.945187420133
 #Camera.cy: 259.0301855291826
 
 
-Camera.k1: -0.0121
-Camera.k2: 0.468
-Camera.p1: 0.0014E-3
-Camera.p2: -0.0086E-3
-Camera.k3: -1.27
+Camera.k1: 0.04728142885558013
+Camera.k2: -0.04766006683736671
+Camera.p1: -0.0008706604743674332
+Camera.p2: 0.0011056990661118518
+Camera.k3: 0.0
 
-Camera.width: 960
-Camera.height: 540
+Camera.width: 1920
+Camera.height: 1080
 
 # Camera frames per second 
 Camera.fps: 30.0
@@ -31,9 +31,11 @@ Camera.RGB: 0
 
 # Close/Far threshold. Baseline times.
 ThDepth: 40.0
+Camera.bf: 0.07732
 
 # Deptmap values factor 
 DepthMapFactor: 1000.0 # 1.0 for ROS_bag
+
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
@@ -54,6 +56,30 @@ ORBextractor.nLevels: 8
 # You can lower these values if your images have low contrast			
 ORBextractor.iniThFAST: 20
 ORBextractor.minThFAST: 5
+
+
+
+#IMU Params
+# Transformation from body-frame (imu) to left camera
+Tbc: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: f
+   data: [0.01454079790332452, 0.9985123643171129, 0.05255115129264876, 0.000038886604828498686,
+         -0.052657767028781444, -0.0517190674778889, 0.997272428993582, -0.00027240709040076273,
+         0.9985067474823975, -0.017268363126415776, 0.051827394947624006, 0.0000031944509913900242,
+         0.0, 0.0, 0.0, 1.0]
+
+
+# Do not insert KFs when recently lost
+IMU.InsertKFsWhenLost: 0
+
+# IMU noise (Use those from VINS-mono)
+IMU.NoiseGyro: 0.000187 # 3 # 2.44e-4 #1e-3 # rad/s^0.5
+IMU.NoiseAcc: 0.00186 #2 # 1.47e-3 #1e-2 # m/s^1.5
+IMU.GyroWalk: 2.66e-05 # rad/s^1.5
+IMU.AccWalk: 0.000433 # m/s^2.5
+IMU.Frequency: 50
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters
