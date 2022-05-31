@@ -92,3 +92,5 @@ my_settings.txt
 this->sysIdborrar/*
 
 */ExecMean.txt
+
+*.vscode*
