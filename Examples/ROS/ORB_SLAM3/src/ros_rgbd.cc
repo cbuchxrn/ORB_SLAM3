@@ -160,99 +160,19 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 
 
     cv::Size rgbSize = cv_ptrRGB->image.size();
-    cv::Size dSize = cv_ptrD->image.size();
-
-    double scaleWidth = static_cast<double>(rgbSize.width)/static_cast<double>(dSize.width) ;
-    double scaleHeigth = static_cast<double>(rgbSize.height)/static_cast<double>(dSize.height);
-    static double scale = 1.1;
-    int paddingHorizontal   =   0;
-    int paddingVertical     =   0;
-    static int xshift = 0;
-    static int yshift = 0;
-
-
-    // rescale image in both axes the same amount and 
-    // apply a zero padding at the border of the other dimension
-    if(scaleWidth > scaleHeigth){
-        //scale               = scaleHeigth;
-    }
-    else{
-        //scale               = scaleWidth;
-    }
-
-    paddingVertical     = static_cast<int>((rgbSize.height - dSize.height *scale)/2 + 0.5);
-    paddingHorizontal   = static_cast<int>((rgbSize.width - dSize.width *scale)/2 + 0.5);
-    cv::Mat rgbImg  = cv_ptrRGB->image.clone();
-    cv::Mat blendedImg = cv::Mat(rgbSize,rgbImg.type());
-    cv::Mat dImg    = cv::Mat(rgbSize,rgbImg.type());
+    cv::Mat dImg    = cv::Mat(rgbSize,cv_ptrRGB->image.type());
    
 
-    cv::resize(cv_ptrD->image,dImg, cv::Size(), scale, scale);
-    dImg.convertTo(dImg,rgbImg.type());
-    cv::copyMakeBorder( dImg, dImg, paddingVertical, paddingVertical, paddingHorizontal, paddingHorizontal, cv::BORDER_CONSTANT , 0);
-    //std::cout <<  rgbImg.size<< std::endl;
-    //std::cout <<  dImg.size<< std::endl;
-    dImg = shiftFrame(dImg,xshift,yshift);
-    double alpha = 0.5;
-    cv::addWeighted (rgbImg,alpha,dImg,(1-alpha),0.0,blendedImg);
-
-    cv::imshow("Blended"    ,blendedImg);
-    //cv::imshow("Depth"      ,dImg);
-    //cv::imshow("RGB"        ,rgbImg);
-    char key = cv::waitKey(27);
-    switch (key)
-    {
-        case 'w':
-            yshift = yshift - 1;
-            std::cout << "shift up, current: xshift " << xshift << ", yshift " << yshift << "scale " << scale << std::endl;
-            break;
-        case 's':
-            yshift = yshift + 1;
-            std::cout << "shift down, current: xshift " << xshift << ", yshift " << yshift << "scale " << scale << std::endl;
-            break;
-        case 'd':
-            xshift = xshift + 1;
-            std::cout << "shift right, current: xshift " << xshift << ", yshift " << yshift << "scale " << scale << std::endl;
-            break;
-        case 'a':
-            xshift = xshift - 1;
-            std::cout << "shift left, current: xshift " << xshift << ", yshift " << yshift << "scale " << scale << std::endl;
-            break;
-        case '+':
-            scale *= 1.1;
-            std::cout << "scale up right, current: xshift " << xshift << ", yshift " << yshift << "scale " << scale << std::endl;
-            break;
-        case '-':
-            scale /= 1.1;
-            std::cout << "scale down, current: xshift " << xshift << ", yshift " << yshift << "scale " << scale << std::endl;
-            break;
-        case 'r':
-            xshift = 0;
-            yshift = 0;
-            std::cout << "resest , current: xshift " << xshift << ", yshift " << yshift << "scale " << scale << std::endl;
-            break;
-        default:
-        std::cout << "no key registered, current: xshift " << xshift << ", yshift " << yshift << "scale " << scale << std::endl;
-    }
-    //Sophus::SE3f Tcw_SE3f = mpSLAM->TrackRGBD(cv_ptrRGB->image,dImg,cv_ptrRGB->header.stamp.toSec(),vImuMeas,filename);
-    //Eigen::Matrix4f Tcw_Matrix = Tcw_SE3f.matrix();
-    //cv::eigen2cv(Tcw_Matrix, TCam); 
+    cv::resize(cv_ptrD->image,dImg,rgbSize);
+   
+    Sophus::SE3f Tcw_SE3f = mpSLAM->TrackRGBD(cv_ptrRGB->image,dImg,cv_ptrRGB->header.stamp.toSec(),vImuMeas,filename);
+    Eigen::Matrix4f Tcw_Matrix = Tcw_SE3f.matrix();
+    cv::eigen2cv(Tcw_Matrix, TCam); 
     
-
-    rgbImg.release();
-    blendedImg.release();
     dImg.release();
     if (TCam.empty())
         return;
-    /*
-    std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
-    double t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
-    std::cout<< t_resize << std::endl;*/
-    //cv::imshow("",dImg);    
-    //cv::waitKey(27);
-    //TrackRGBD(rgbImg,dImg,cv_ptrRGB->header.stamp.toSec(),vImuMeas,filename);
-    //TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
-
+    
     this->PublishPose(&TCam,this->mpSLAM);   
 }
 
