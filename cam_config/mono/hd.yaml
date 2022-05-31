@@ -65,22 +65,27 @@ Tbc: !!opencv-matrix
    rows: 4
    cols: 4
    dt: f
-   data: [    0.08705253,  0.02457502,  0.99590056,  0.07284531         
-            ,-0.99620365,  0.00176981,  0.08703536, -0.19964914
-            , 0.00037634, -0.99969642,  0.02463579,  0.01698376
-            , 0.        ,  0.        ,  0.        ,  1.        ]
-
+   data: [-0.04333072, -0.04541787,  0.99802789,  0.06679548,
+         0.99900039, -0.01295346,  0.04278346,  0.13850938,
+         0.01098478,  0.99888409,  0.04593375,  0.04053602,
+         0. ,         0.,          0. ,         1.        ]
 
 
 # Do not insert KFs when recently lost
 IMU.InsertKFsWhenLost: 0
 
 # IMU noise (Use those from VINS-mono)
-IMU.NoiseGyro: 0.000187 # 3 # 2.44e-4 #1e-3 # rad/s^0.5
-IMU.NoiseAcc: 0.00186 #2 # 1.47e-3 #1e-2 # m/s^1.5
-IMU.GyroWalk: 2.66e-05 # rad/s^1.5
-IMU.AccWalk: 0.000433 # m/s^2.5
-IMU.Frequency: 289
+#IMU.NoiseGyro: 0.000187 # 3 # 2.44e-4 #1e-3 # rad/s^0.5
+#IMU.NoiseAcc: 0.00186 #2 # 1.47e-3 #1e-2 # m/s^1.5
+#IMU.GyroWalk: 2.66e-05 # rad/s^1.5
+#IMU.AccWalk: 0.000433 # m/s^2.5
+
+IMU.NoiseGyro:    0.0031291084992374424 
+IMU.NoiseAcc:     0.031123752987067613
+IMU.GyroWalk:     2.66e-05
+IMU.AccWalk:      0.000433
+
+IMU.Frequency: 287
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters
