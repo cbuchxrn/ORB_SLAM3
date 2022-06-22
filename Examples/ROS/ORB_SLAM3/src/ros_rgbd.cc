@@ -61,7 +61,8 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "RGBD");
     ros::start();
-
+    // wait for the is initialised service to start 
+    ros::service::waitForService("/is_initialised");
     if(argc != 6)
     {
         cerr << endl << "Usage: rosrun ORB_SLAM3 RGBD path_to_vocabulary path_to_settings rgb_topic d_topic map_file_name" << endl;        
@@ -155,14 +156,10 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     cv::Size rgbSize = cv_ptrRGB->image.size();
     cv::Size dSize = cv_ptrD->image.size();
 
-    Sophus::SE3f Tcw_SE3f = mpSLAM->TrackRGBD(cv_ptrRGB->image,dImg,cv_ptrRGB->header.stamp.toSec(),vImuMeas,filename);
+    Sophus::SE3f Tcw_SE3f = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec(),vImuMeas,filename);
     Eigen::Matrix4f Tcw_Matrix = Tcw_SE3f.matrix();
     cv::eigen2cv(Tcw_Matrix, TCam); 
     
-
-    rgbImg.release();
-    blendedImg.release();
-    dImg.release();
     if (TCam.empty())
         return;
    
